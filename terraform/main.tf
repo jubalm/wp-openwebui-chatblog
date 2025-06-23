@@ -32,14 +32,6 @@ variable "ionos_token" {
   type = string
 }
 
-variable "s3_access_key" {
-  type = string
-}
-
-variable "s3_secret_key" {
-  type = string
-}
-
 variable "wordpress_tenants" {
   type    = list(string)
   default = ["tenant1"]
