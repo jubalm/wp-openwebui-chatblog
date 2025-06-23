@@ -1,0 +1,9 @@
+{
+  "command.rules": [
+    {
+      "pattern": "^terraform(.*)",
+      "command": "terraform -chdir=terraform$1",
+      "before": "source .shellrc"
+    }
+  ]
+} 

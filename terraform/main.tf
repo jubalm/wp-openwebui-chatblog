@@ -78,19 +78,19 @@ resource "ionoscloud_k8s_node_pool" "mks_pool" {
 
 # Use the correct MariaDB cluster resource
 resource "ionoscloud_mariadb_cluster" "mariadb" {
-  display_name = "mariadb-cluster"
-  location     = "de/txl"
+  display_name    = "mariadb-cluster"
+  location        = "de/txl"
   mariadb_version = "10.6"
-  instances    = 1
-  cores        = 2
-  ram          = 2048
-  storage_size = 20
-  
+  instances       = 1
+  cores           = 2
+  ram             = 4096 # Value must be in MB, and at least 4096
+  storage_size    = 20
+
   credentials {
-    username = "root"
+    username = "wpuser"
     password = "wp_password"
   }
-  
+
   connections {
     datacenter_id = ionoscloud_datacenter.main.id
     lan_id        = ionoscloud_lan.db_lan.id
@@ -100,25 +100,25 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
 
 # Use the correct PostgreSQL cluster resource
 resource "ionoscloud_pg_cluster" "postgres" {
-  display_name = "postgres-cluster"
-  location     = "de/txl"
-  postgres_version = "14"
-  instances    = 1
-  cores        = 2
-  ram          = 2048
-  storage_size = 2048
-  storage_type = "SSD"
+  display_name         = "postgres-cluster"
+  location             = "de/txl"
+  postgres_version     = "14"
+  instances            = 1
+  cores                = 2
+  ram                  = 2048
+  storage_size         = 2048
+  storage_type         = "SSD"
   synchronization_mode = "ASYNCHRONOUS"
-  
+
   credentials {
-    username = "pg_user"
+    username = "authentikuser"
     password = "authentik_password"
   }
-  
+
   connections {
     datacenter_id = ionoscloud_datacenter.main.id
     lan_id        = ionoscloud_lan.db_lan.id
-    cidr          = "10.0.0.0/24"
+    cidr          = "10.0.1.0/24" # Use a different CIDR block
   }
 }
 
