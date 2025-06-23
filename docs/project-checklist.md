@@ -2,24 +2,24 @@
 
 ## Phase 1: Infrastructure Provisioning
 
-- [ ] **Terraform Backend**
-  - [ ] Configure Terraform state backend using IONOS Object Storage (S3-compatible).
+- [x] **Terraform Backend**
+  - [x] Configure Terraform state backend using IONOS Object Storage (S3-compatible).
 
-- [ ] **Kubernetes Cluster & Node Pools**
-  - [ ] Provision IONOS Managed Kubernetes (MKS) cluster in `de/txl` region.
-  - [ ] Create at least one node pool with minimal viable instance size.
+- [x] **Kubernetes Cluster & Node Pools**
+  - [x] Provision IONOS Managed Kubernetes (MKS) cluster in `de/txl` region.
+  - [x] Create at least one node pool with minimal viable instance size.
 
-- [ ] **Managed Databases**
-  - [ ] Provision one IONOS Managed MariaDB cluster *per WordPress tenant* (multi-tenancy).
-  - [ ] Provision one IONOS Managed PostgreSQL cluster for Authentik.
+- [x] **Managed Databases**
+  - [x] Provision one IONOS Managed MariaDB cluster *per WordPress tenant* (multi-tenancy).
+  - [x] Provision one IONOS Managed PostgreSQL cluster for Authentik.
 
-- [ ] **Terraform Outputs**
-  - [ ] Output Kubeconfig for the MKS cluster.
-  - [ ] Output connection details (host, port, username, db name) for each MariaDB and the PostgreSQL instance (never output real passwords in plaintext).
+- [x] **Terraform Outputs**
+  - [x] Output Kubeconfig for the MKS cluster.
+  - [x] Output connection details (host, port, username, db name) for each MariaDB and the PostgreSQL instance (never output real passwords in plaintext).
 
-- [ ] **Secrets Management**
-  - [ ] Store all sensitive values (IONOS token, DB credentials, API keys) as encrypted secrets in GitHub Actions.
-  - [ ] Ensure no sensitive values are hardcoded or output in plaintext.
+- [x] **Secrets Management**
+  - [x] Store all sensitive values (IONOS token, DB credentials, API keys) as encrypted secrets in GitHub Actions.
+  - [x] Ensure no sensitive values are hardcoded or output in plaintext.
 
 ---
 
