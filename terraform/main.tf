@@ -40,6 +40,11 @@ variable "s3_secret_key" {
   type = string
 }
 
+variable "wordpress_tenants" {
+  type    = list(string)
+  default = ["tenant1"]
+}
+
 # Create a datacenter first
 resource "ionoscloud_datacenter" "main" {
   name        = "demo-datacenter"
@@ -76,9 +81,10 @@ resource "ionoscloud_k8s_node_pool" "mks_pool" {
   storage_size      = 20
 }
 
-# Use the correct MariaDB cluster resource
+# Remove the single MariaDB cluster resource and replace with per-tenant clusters
 resource "ionoscloud_mariadb_cluster" "mariadb" {
-  display_name    = "mariadb-cluster"
+  for_each        = toset(var.wordpress_tenants)
+  display_name    = "mariadb-${each.key}"
   location        = "de/txl"
   mariadb_version = "10.6"
   instances       = 1
@@ -126,13 +132,17 @@ resource "ionoscloud_pg_cluster" "postgres" {
 #   value = ionoscloud_k8s_cluster.mks.kube_config
 # }
 
-output "mariadb_connection" {
+# Update output for mariadb connections to output a map per tenant
+output "mariadb_connections" {
   value = {
-    host     = ionoscloud_mariadb_cluster.mariadb.dns_name
-    port     = 3306
-    username = "root"
-    password = "password" # Note: You'll need to set this via the IONOS Cloud console
-    database = "default"
+    for tenant, cluster in ionoscloud_mariadb_cluster.mariadb :
+    tenant => {
+      host     = cluster.dns_name
+      port     = 3306
+      username = "root"
+      password = "password" # Note: You'll need to set this via the IONOS Cloud console
+      database = "default"
+    }
   }
 }
 
