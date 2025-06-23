@@ -48,7 +48,7 @@ resource "ionoscloud_datacenter" "main" {
 }
 
 resource "ionoscloud_lan" "db_lan" {
-  datacenter_id = ionoscloud_datacenter.main.id
+  datacenter_id   = ionoscloud_datacenter.main.id
   name            = "db-lan"
   public          = false
 }
@@ -58,7 +58,7 @@ resource "ionoscloud_k8s_cluster" "mks" {
   k8s_version = "1.32.5"
   maintenance_window {
     day_of_the_week = "Monday"
-    time            = "03:00:00"
+    time            = "03:00:00Z"
   }
 }
 
@@ -118,7 +118,7 @@ resource "ionoscloud_pg_cluster" "postgres" {
   connections {
     datacenter_id = ionoscloud_datacenter.main.id
     lan_id        = ionoscloud_lan.db_lan.id
-    cidr          = "10.7.222.200/25"
+    cidr          = "10.7.222.222/24"
   }
 }
 
