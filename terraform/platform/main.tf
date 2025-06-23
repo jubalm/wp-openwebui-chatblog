@@ -1,10 +1,33 @@
 terraform {
   required_providers {
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.0.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0.0"
+    }
     ionoscloud = {
       source  = "ionos-cloud/ionoscloud"
       version = ">= 6.4.10"
     }
   }
+}
+
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = var.kubeconfig_path
+  }
+}
+
+variable "kubeconfig_path" {
+  type    = string
+  default = "~/.kube/config"
 }
 
 provider "ionoscloud" {
@@ -77,6 +100,31 @@ resource "ionoscloud_pg_cluster" "postgres" {
   lifecycle {
     ignore_changes = [credentials]
   }
+}
+
+resource "kubernetes_namespace" "admin_apps" {
+  metadata {
+    name = "admin-apps"
+  }
+}
+
+resource "helm_release" "authentik" {
+  name       = "authentik"
+  namespace  = kubernetes_namespace.admin_apps.metadata[0].name
+  repository = "https://charts.goauthentik.io/"
+  chart      = "authentik"
+  version    = "2024.6.0"
+  values     = [file("${path.module}/../../charts/authentik/my-values.yaml")]
+}
+
+resource "helm_release" "nginx_ingress" {
+  name             = "ingress-nginx"
+  namespace        = "ingress-nginx"
+  create_namespace = true
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  version          = "4.10.1"
+  # You can add custom values here if needed
 }
 
 output "cluster_id" {
