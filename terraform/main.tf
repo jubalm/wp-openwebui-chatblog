@@ -83,7 +83,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   mariadb_version = "10.6"
   instances       = 1
   cores           = 2
-  ram             = 4096 # Value must be in MB, and at least 4096
+  ram             = 4 # Value must be in GB, and at least 1
   storage_size    = 20
 
   credentials {
@@ -94,7 +94,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   connections {
     datacenter_id = ionoscloud_datacenter.main.id
     lan_id        = ionoscloud_lan.db_lan.id
-    cidr          = "10.0.0.0/24"
+    cidr          = "10.7.222.100/24"
   }
 }
 
@@ -104,9 +104,9 @@ resource "ionoscloud_pg_cluster" "postgres" {
   location             = "de/txl"
   postgres_version     = "14"
   instances            = 1
-  cores                = 2
-  ram                  = 2048
-  storage_size         = 2048
+  cores                = 4
+  ram                  = 4096
+  storage_size         = 10240
   storage_type         = "SSD"
   synchronization_mode = "ASYNCHRONOUS"
 
@@ -118,7 +118,7 @@ resource "ionoscloud_pg_cluster" "postgres" {
   connections {
     datacenter_id = ionoscloud_datacenter.main.id
     lan_id        = ionoscloud_lan.db_lan.id
-    cidr          = "10.0.1.0/24" # Use a different CIDR block
+    cidr          = "10.7.222.200/25"
   }
 }
 
