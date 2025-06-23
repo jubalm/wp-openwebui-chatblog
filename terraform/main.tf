@@ -67,6 +67,13 @@ resource "ionoscloud_k8s_cluster" "mks" {
   }
 }
 
+# Add data source to fetch kubeconfig for the created cluster
+# This assumes the cluster name is unique in your account
+
+data "ionoscloud_k8s_cluster" "mks" {
+  name = ionoscloud_k8s_cluster.mks.name
+}
+
 resource "ionoscloud_k8s_node_pool" "mks_pool" {
   k8s_cluster_id    = ionoscloud_k8s_cluster.mks.id
   name              = "mks-node-pool"
@@ -128,13 +135,15 @@ resource "ionoscloud_pg_cluster" "postgres" {
   }
 }
 
-# output "kubeconfig" {
-#   value = ionoscloud_k8s_cluster.mks.kube_config
-# }
+# Update kubeconfig output to use the data source
+output "kubeconfig" {
+  value     = data.ionoscloud_k8s_cluster.mks.kube_config
+  sensitive = true
+}
 
 # Update output for mariadb connections to output a map per tenant
 output "mariadb_connections" {
-  value = {
+  value     = {
     for tenant, cluster in ionoscloud_mariadb_cluster.mariadb :
     tenant => {
       host     = cluster.dns_name
@@ -144,6 +153,7 @@ output "mariadb_connections" {
       database = "default"
     }
   }
+  sensitive = true # Mark output as sensitive to avoid plaintext in logs
 }
 
 output "postgres_connection" {
@@ -154,4 +164,5 @@ output "postgres_connection" {
     password = "password" # Note: You'll need to set this via the IONOS Cloud console
     database = "postgres"
   }
+  sensitive = true # Mark output as sensitive to avoid plaintext in logs
 }

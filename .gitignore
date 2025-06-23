@@ -26,3 +26,9 @@ __pycache__/
 # Miscellaneous
 *.swp
 *.swo
+
+# Ignore Terraform variable files containing secrets
+terraform.tfvars
+*.tfvars
+terraform/terraform.tfvars
+terraform/*.tfvars
