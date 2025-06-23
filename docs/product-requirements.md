@@ -8,15 +8,15 @@ Author: Jubal Mabaquiao
 
 **1. Introduction & Overview**
 
-This document outlines the requirements for a Proof of Concept (PoC) project. The primary goal is to demonstrate the deployment, integration, and operation of a suite of interconnected applications (OpenWebUI, WordPress, Authentik) on IONOS Managed Kubernetes (MKS). The PoC will leverage IONOS Managed Database services (MariaDB for WordPress, PostgreSQL for Authentik) and will utilize Terraform for infrastructure provisioning. A key integration point is a custom "ModelContextProtocol" (MCP) enabling communication between OpenWebUI and WordPress. This PoC aims to validate the chosen technology stack and integration patterns on the IONOS Cloud platform.
+This document outlines the requirements for a Proof of Concept (PoC) project. The primary goal is to demonstrate the deployment, integration, and operation of a suite of interconnected applications (OpenWebUI, multiple WordPress instances, Authentik) on IONOS Managed Kubernetes (MKS). The PoC will leverage IONOS Managed Database services (MariaDB for each WordPress tenant, PostgreSQL for Authentik) and will utilize Terraform for infrastructure provisioning. A key integration point is a custom "ModelContextProtocol" (MCP) enabling communication between OpenWebUI and each WordPress instance. This PoC aims to validate the chosen technology stack and integration patterns on the IONOS Cloud platform, with a core focus on multi-tenancy: a single OpenWebUI and Authentik instance, and multiple isolated WordPress instances (one per tenant).
 
 **2. Goals & Objectives**
 
 - **G1:** Successfully provision an IONOS MKS cluster and associated IONOS Managed Database instances (MariaDB, PostgreSQL) using Terraform.
-- **G2:** Deploy OpenWebUI, WordPress, and Authentik containerized applications onto the MKS cluster.
-- **G3:** Integrate Authentik as an SSO provider for both OpenWebUI and WordPress.
+- **G2:** Deploy OpenWebUI, multiple WordPress instances, and Authentik containerized applications onto the MKS cluster.
+- **G3:** Integrate Authentik as an SSO provider for both OpenWebUI and each WordPress instance.
 - **G4:** Enable OpenWebUI to interact with an IONOS-provided OpenAI-compatible LLM endpoint.
-- **G5:** Enable OpenWebUI to communicate with WordPress via the ModelContextProtocol (MCP) to draft blog posts.
+- **G5:** Enable OpenWebUI to communicate with each WordPress instance via the ModelContextProtocol (MCP) to draft blog posts.
 - **G6:** Implement a secure and automated way to manage infrastructure and application secrets, leveraging GitHub Actions.
 - **G7:** Establish foundational understanding and best practices for deploying such a stack on IONOS Cloud for potential future development.
 
@@ -33,18 +33,18 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - Terraform scripts for MKS cluster, node pools, IONOS Managed MariaDB, and IONOS Managed PostgreSQL.
 - Terraform backend configured for IONOS Object Storage.
 - Deployment of Authentik on MKS, using IONOS Managed PostgreSQL.
-- Deployment of WordPress on MKS, using IONOS Managed MariaDB, including:
+- Deployment of multiple WordPress instances on MKS, each using its own IONOS Managed MariaDB instance, including:
   - Official Automattic `wordpress-mcp` plugin (v0.2.2).
   - An open-source OIDC SSO client plugin (e.g., "OpenID Connect Generic Client by daggerhart").
   - A custom WordPress plugin to facilitate OpenWebUI integration setup (details in Functional Requirements).
-- Deployment of OpenWebUI on MKS, configured for:
+- Deployment of a single OpenWebUI on MKS, configured for:
   - Authentik SSO.
   - Connection to an IONOS-provided OpenAI-compatible LLM endpoint.
-  - Connection to WordPress via MCP.
-- Basic Kubernetes resources: Namespaces (`admin-apps`, `wordpress-tenants`), Deployments, Services, PersistentVolumeClaims (for application data like WordPress `/var/www/html`, Authentik Redis, OWUI config), ConfigMaps, Secrets.
+  - Connection to all WordPress instances via MCP.
+- Basic Kubernetes resources: Namespaces (`admin-apps`, and one namespace per WordPress tenant, e.g., `wordpress-tenant-<name>`), Deployments, Services, PersistentVolumeClaims (for application data like WordPress `/var/www/html`, Authentik Redis, OWUI config), ConfigMaps, Secrets.
 - Ingress configuration for IP-based access (no custom domains or TLS) to externally exposed application UIs.
 - Secrets management strategy using GitHub Actions and Kubernetes Secrets for sensitive data (database credentials, API keys, Authentik bootstrap tokens).
-- Demonstration of core user flows (SSO login, content generation via OWUI to WordPress).
+- Demonstration of core user flows (SSO login, content generation via OWUI to any tenant's WordPress).
 
 **4.2. Out of Scope:**
 
@@ -54,7 +54,6 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - High availability (HA) configurations beyond what IONOS MKS/DBaaS provide by default for selected minimal tiers.
 - Detailed UI/UX customization of applications beyond functional necessity for the PoC.
 - Data migration strategies.
-- Supporting multiple, fully isolated WordPress tenants (the PoC focuses on one WordPress instance in its own namespace).
 - Load testing or performance benchmarking.
 
 **5. Core Components & Technologies**
@@ -83,10 +82,10 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - **FR1: Infrastructure Provisioning (Terraform)**
 
   - **FR1.1:** As a PoC Implementer, I can run Terraform scripts to create an MKS cluster in `de/txl` with at least one node pool using minimal viable instance sizes.
-  - **FR1.2:** As a PoC Implementer, I can run Terraform scripts to provision an IONOS Managed MariaDB cluster (minimal tier) for WordPress.
+  - **FR1.2:** As a PoC Implementer, I can run Terraform scripts to provision an IONOS Managed MariaDB cluster (minimal tier) for each WordPress tenant.
   - **FR1.3:** As a PoC Implementer, I can run Terraform scripts to provision an IONOS Managed PostgreSQL cluster (minimal tier) for Authentik.
   - **FR1.4:** Terraform state shall be stored securely in IONOS Object Storage.
-  - **FR1.5:** Terraform outputs must include Kubeconfig for MKS, and connection details (host, port, user, password, db name) for MariaDB and PostgreSQL.
+  - **FR1.5:** Terraform outputs must include Kubeconfig for MKS, and connection details (host, port, user, password, db name) for each MariaDB and the PostgreSQL instance.
 
 - **FR2: Authentik Deployment & Configuration**
 
@@ -95,19 +94,19 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
   - **FR2.3:** Authentik shall deploy its own Redis instance within its Kubernetes deployment, using a PVC for persistence.
   - **FR2.4:** Authentik's UI shall be accessible externally via an IP-based Ingress rule.
   - **FR2.5:** Authentik shall be configured as an OIDC provider.
-  - **FR2.6:** OIDC client applications for WordPress and OpenWebUI shall be configured within Authentik.
+  - **FR2.6:** OIDC client applications for all WordPress tenants and OpenWebUI shall be configured within Authentik.
 
 - **FR3: WordPress Deployment & Configuration**
 
-  - **FR3.1:** WordPress shall be deployed on MKS within the `wordpress-tenants` namespace.
-  - **FR3.2:** WordPress shall use the IONOS Managed MariaDB instance as its database. Connection details will be supplied via Kubernetes Secrets.
+  - **FR3.1:** Each WordPress tenant shall be deployed on MKS within its own namespace (e.g., `wordpress-tenant-<name>`).
+  - **FR3.2:** Each WordPress instance shall use its own IONOS Managed MariaDB instance as its database. Connection details will be supplied via Kubernetes Secrets.
   - **FR3.3:** WordPress data (`/var/www/html`) shall be persisted using a PVC.
-  - **FR3.4:** The WordPress deployment shall include:
+  - **FR3.4:** Each WordPress deployment shall include:
     - The `wordpress-mcp` plugin (v0.2.2).
     - An open-source OIDC client plugin.
     - A custom plugin for OpenWebUI integration setup (see FR5).
-  - **FR3.5:** WordPress Admin UI and blog frontend shall be accessible externally via an IP-based Ingress rule.
-  - **FR3.6:** WordPress shall be configured as an OIDC client to Authentik for user login.
+  - **FR3.5:** Each WordPress Admin UI and blog frontend shall be accessible externally via an IP-based Ingress rule.
+  - **FR3.6:** Each WordPress instance shall be configured as an OIDC client to Authentik for user login.
 
 - **FR4: OpenWebUI Deployment & Configuration**
 
@@ -116,7 +115,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
   - **FR4.3:** OpenWebUI shall be configured to use the IONOS-provided OpenAI-compatible LLM endpoint. The endpoint URL and API key will be supplied via Kubernetes Secrets.
   - **FR4.4:** OpenWebUI's UI shall be accessible externally via an IP-based Ingress rule.
   - **FR4.5:** OpenWebUI shall be configured as an OIDC client to Authentik for user login.
-  - **FR4.6:** OpenWebUI shall be configured to communicate with the WordPress MCP endpoint (e.g., `http://wordpress-mcp-service.wordpress-tenants.svc.cluster.local/wp-json/mcp/v1`).
+  - **FR4.6:** OpenWebUI shall be configured to communicate with the MCP endpoint of any tenant's WordPress instance (e.g., `http://wordpress-mcp-service.wordpress-tenant-<name>.svc.cluster.local/wp-json/mcp/v1`).
 
 - **FR5: WordPress-OpenWebUI Integration (Custom WordPress Plugin)**
 
@@ -175,11 +174,11 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 
 The PoC will be considered successful when:
 
-- **SC1:** All infrastructure components (MKS, MariaDB, PostgreSQL) are successfully provisioned and configured via Terraform, with state in IONOS Object Storage.
-- **SC2:** Authentik, WordPress, and OpenWebUI are deployed and running on the MKS cluster in their designated namespaces.
-- **SC3:** Users can successfully log into WordPress using SSO credentials managed by Authentik.
+- **SC1:** All infrastructure components (MKS, MariaDB for each tenant, PostgreSQL) are successfully provisioned and configured via Terraform, with state in IONOS Object Storage.
+- **SC2:** Authentik, all WordPress tenant instances, and OpenWebUI are deployed and running on the MKS cluster in their designated namespaces.
+- **SC3:** Users can successfully log into any WordPress tenant using SSO credentials managed by Authentik.
 - **SC4:** Users can successfully log into OpenWebUI using SSO credentials managed by Authentik.
 - **SC5:** OpenWebUI can connect to and receive responses from the IONOS-provided OpenAI-compatible LLM endpoint.
-- **SC6:** The custom WordPress plugin facilitates the (assumed) API-driven setup of a connection so that an OpenWebUI user context is linked to WordPress for MCP.
-- **SC7:** A user in OpenWebUI can generate content using the LLM and successfully send it as a draft to the linked WordPress instance via the MCP integration. The draft appears in WordPress.
+- **SC6:** The custom WordPress plugin facilitates the (assumed) API-driven setup of a connection so that an OpenWebUI user context is linked to any WordPress tenant for MCP.
+- **SC7:** A user in OpenWebUI can generate content using the LLM and successfully send it as a draft to the linked WordPress tenant instance via the MCP integration. The draft appears in the correct WordPress instance.
 - **SC8:** All sensitive credentials and API keys are managed through GitHub Actions secrets and Kubernetes Secrets, not hardcoded.
