@@ -1,3 +1,20 @@
+terraform {
+  required_providers {
+    ionoscloud = {
+      source  = "ionos-cloud/ionoscloud"
+      version = ">= 6.4.10"
+    }
+  }
+}
+
+provider "ionoscloud" {
+  token = var.ionos_token
+}
+
+variable "ionos_token" {
+  type = string
+}
+
 variable "wordpress_tenants" {
   type    = list(string)
   default = ["tenant1"]
