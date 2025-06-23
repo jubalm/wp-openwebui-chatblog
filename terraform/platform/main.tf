@@ -52,11 +52,49 @@ resource "ionoscloud_k8s_node_pool" "mks_pool" {
   storage_size      = 20
 }
 
+resource "ionoscloud_pg_cluster" "postgres" {
+  display_name         = "postgres-cluster"
+  location             = "de/txl"
+  postgres_version     = "14"
+  instances            = 1
+  cores                = 4
+  ram                  = 4096
+  storage_size         = 10240
+  storage_type         = "SSD"
+  synchronization_mode = "ASYNCHRONOUS"
+
+  credentials {
+    username = "authentikuser"
+    password = "authentik_password"
+  }
+
+  connections {
+    datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
+    lan_id        = data.terraform_remote_state.infra.outputs.lan_id
+    cidr          = "10.7.222.222/24"
+  }
+
+  lifecycle {
+    ignore_changes = [credentials]
+  }
+}
+
 output "cluster_id" {
   value = ionoscloud_k8s_cluster.mks.id
 }
 
 output "kubeconfig" {
   value     = data.ionoscloud_k8s_cluster.mks.kube_config
+  sensitive = true
+}
+
+output "postgres_connection" {
+  value = {
+    host     = ionoscloud_pg_cluster.postgres.dns_name
+    port     = 5432
+    username = "postgres"
+    password = "password" # Set via IONOS Cloud console
+    database = "postgres"
+  }
   sensitive = true
 } 

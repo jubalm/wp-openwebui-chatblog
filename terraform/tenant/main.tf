@@ -42,29 +42,6 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   }
 }
 
-resource "ionoscloud_pg_cluster" "postgres" {
-  display_name         = "postgres-cluster"
-  location             = "de/txl"
-  postgres_version     = "14"
-  instances            = 1
-  cores                = 4
-  ram                  = 4096
-  storage_size         = 10240
-  storage_type         = "SSD"
-  synchronization_mode = "ASYNCHRONOUS"
-
-  credentials {
-    username = "authentikuser"
-    password = "authentik_password"
-  }
-
-  connections {
-    datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
-    lan_id        = data.terraform_remote_state.infra.outputs.lan_id
-    cidr          = "10.7.222.222/24"
-  }
-}
-
 output "mariadb_connections" {
   value = {
     for tenant, cluster in ionoscloud_mariadb_cluster.mariadb :
@@ -75,17 +52,6 @@ output "mariadb_connections" {
       password = "password" # Set via IONOS Cloud console
       database = "default"
     }
-  }
-  sensitive = true
-}
-
-output "postgres_connection" {
-  value = {
-    host     = ionoscloud_pg_cluster.postgres.dns_name
-    port     = 5432
-    username = "postgres"
-    password = "password" # Set via IONOS Cloud console
-    database = "postgres"
   }
   sensitive = true
 } 

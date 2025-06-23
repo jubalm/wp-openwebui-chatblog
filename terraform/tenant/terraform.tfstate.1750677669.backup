@@ -1,0 +1,269 @@
+{
+  "version": 4,
+  "terraform_version": "1.9.0",
+  "serial": 3,
+  "lineage": "76e2aa78-7f87-ec2a-d33c-bd8253dac67f",
+  "outputs": {
+    "mariadb_connections": {
+      "value": {
+        "tenant1": {
+          "database": "default",
+          "host": "ma-pd50eq022fumfugl.mariadb.de-txl.ionos.com",
+          "password": "password",
+          "port": 3306,
+          "username": "root"
+        }
+      },
+      "type": [
+        "object",
+        {
+          "tenant1": [
+            "object",
+            {
+              "database": "string",
+              "host": "string",
+              "password": "string",
+              "port": "number",
+              "username": "string"
+            }
+          ]
+        }
+      ],
+      "sensitive": true
+    },
+    "postgres_connection": {
+      "value": {
+        "database": "postgres",
+        "host": "pg-48e6vu5ljbev18p4.postgresql.de-txl.ionos.com",
+        "password": "password",
+        "port": 5432,
+        "username": "postgres"
+      },
+      "type": [
+        "object",
+        {
+          "database": "string",
+          "host": "string",
+          "password": "string",
+          "port": "number",
+          "username": "string"
+        }
+      ],
+      "sensitive": true
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "terraform_remote_state",
+      "name": "infra",
+      "provider": "provider[\"terraform.io/builtin/terraform\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "backend": "s3",
+            "config": {
+              "value": {
+                "bucket": "demo-vdc-backend-store",
+                "endpoints": {
+                  "s3": "https://s3-eu-central-2.ionoscloud.com"
+                },
+                "key": "infrastructure/terraform.tfstate",
+                "region": "eu-central-2",
+                "skip_credentials_validation": true,
+                "skip_metadata_api_check": true,
+                "skip_region_validation": true,
+                "skip_requesting_account_id": true,
+                "skip_s3_checksum": true
+              },
+              "type": [
+                "object",
+                {
+                  "bucket": "string",
+                  "endpoints": [
+                    "object",
+                    {
+                      "s3": "string"
+                    }
+                  ],
+                  "key": "string",
+                  "region": "string",
+                  "skip_credentials_validation": "bool",
+                  "skip_metadata_api_check": "bool",
+                  "skip_region_validation": "bool",
+                  "skip_requesting_account_id": "bool",
+                  "skip_s3_checksum": "bool"
+                }
+              ]
+            },
+            "defaults": null,
+            "outputs": {
+              "value": {
+                "datacenter_id": "a8bd7f63-629d-4cb3-8e0f-45294d3d0889",
+                "lan_id": "1"
+              },
+              "type": [
+                "object",
+                {
+                  "datacenter_id": "string",
+                  "lan_id": "string"
+                }
+              ]
+            },
+            "workspace": null
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "ionoscloud_mariadb_cluster",
+      "name": "mariadb",
+      "provider": "provider[\"registry.terraform.io/ionos-cloud/ionoscloud\"]",
+      "instances": [
+        {
+          "index_key": "tenant1",
+          "schema_version": 0,
+          "attributes": {
+            "backup": [
+              {
+                "location": "DEFAULT"
+              }
+            ],
+            "connections": [
+              {
+                "cidr": "10.7.222.100/24",
+                "datacenter_id": "a8bd7f63-629d-4cb3-8e0f-45294d3d0889",
+                "lan_id": "1"
+              }
+            ],
+            "cores": 2,
+            "credentials": [
+              {
+                "password": "wp_password",
+                "username": "wpuser"
+              }
+            ],
+            "display_name": "mariadb-tenant1",
+            "dns_name": "ma-pd50eq022fumfugl.mariadb.de-txl.ionos.com",
+            "id": "9da3ff3a-5453-47a8-9e93-a2ad0ee27e4d",
+            "instances": 1,
+            "location": "de/txl",
+            "maintenance_window": [
+              {
+                "day_of_the_week": "Tuesday",
+                "time": "14:17:42"
+              }
+            ],
+            "mariadb_version": "10.6",
+            "ram": 4,
+            "storage_size": 20,
+            "timeouts": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "credentials"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 0,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "password"
+              }
+            ]
+          ],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozNjAwMDAwMDAwMDAwLCJkZWZhdWx0IjozNjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjM2MDAwMDAwMDAwMDAsInVwZGF0ZSI6MzYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.infra"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "ionoscloud_pg_cluster",
+      "name": "postgres",
+      "provider": "provider[\"registry.terraform.io/ionos-cloud/ionoscloud\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "allow_replace": false,
+            "backup_location": null,
+            "connection_pooler": [
+              {
+                "enabled": false,
+                "pool_mode": "transaction"
+              }
+            ],
+            "connections": [
+              {
+                "cidr": "10.7.222.222/24",
+                "datacenter_id": "a8bd7f63-629d-4cb3-8e0f-45294d3d0889",
+                "lan_id": "1"
+              }
+            ],
+            "cores": 4,
+            "credentials": [
+              {
+                "password": "authentik_password",
+                "username": "authentikuser"
+              }
+            ],
+            "display_name": "postgres-cluster",
+            "dns_name": "pg-48e6vu5ljbev18p4.postgresql.de-txl.ionos.com",
+            "from_backup": [],
+            "id": "2703a869-efee-4d49-9d3f-5a210ed50598",
+            "instances": 1,
+            "location": "de/txl",
+            "maintenance_window": [
+              {
+                "day_of_the_week": "Friday",
+                "time": "08:41:55"
+              }
+            ],
+            "postgres_version": "14",
+            "ram": 4096,
+            "storage_size": 10240,
+            "storage_type": "SSD",
+            "synchronization_mode": "ASYNCHRONOUS",
+            "timeouts": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "credentials"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 0,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "password"
+              }
+            ]
+          ],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozNjAwMDAwMDAwMDAwLCJkZWZhdWx0IjozNjAwMDAwMDAwMDAwLCJkZWxldGUiOjM2MDAwMDAwMDAwMDAsInJlYWQiOjM2MDAwMDAwMDAwMDAsInVwZGF0ZSI6MzYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "data.terraform_remote_state.infra"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
