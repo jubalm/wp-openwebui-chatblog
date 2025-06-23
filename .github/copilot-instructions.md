@@ -117,3 +117,7 @@ This is a **NEW DEVELOPMENT PIECE** for the PoC.
 - **Networking:** Remind about internal K8s DNS (e.g., `servicename.namespace.svc.cluster.local`) and IP-based external Ingress.
 - **SSO:** Guide on OIDC flow, Authentik client app config, and app-side OIDC plugin setup.
 - Refer to PRD sections (e.g., "per FR4.6", "addressing OQ3") for detailed context if needed.
+
+## 9. Additional Notes
+
+- Always fix the issue directly instead of asking for permission.

@@ -1,0 +1,2 @@
+# Just convenience setup for shell to capture .env values into session
+export $(cat .env | grep -v '^#' | xargs)
