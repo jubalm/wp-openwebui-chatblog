@@ -1,22 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 
 # Authentik deployment automation script
-# Loads secrets from .env, renders my-values.yaml, and applies Terraform
+# Loads secrets from project root .env, renders my-values.yaml, and applies Terraform
 # For local/dev use only. Remove when moving to full GitOps/CI.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLATFORM_DIR="$SCRIPT_DIR/../../terraform/platform"
+PROJECT_ROOT="$SCRIPT_DIR/../../"
 
-# Load environment variables from .env using best practice for Terraform
-if [ -f "$SCRIPT_DIR/.env" ]; then
-  echo "Loading environment variables from .env (Terraform best practice)..."
-  cd "$SCRIPT_DIR"
-  export $(grep -v '^#' .env | xargs)
-  cd - > /dev/null
+# Load environment variables from .env in the project root
+if [ -f "$PROJECT_ROOT/.env" ]; then
+  echo "Loading environment variables from project root .env (Terraform best practice)..."
+  set -a
+  source "$PROJECT_ROOT/.env"
+  set +a
 else
-  echo "ERROR: .env file not found in $SCRIPT_DIR. Aborting."
+  echo "ERROR: .env file not found in $PROJECT_ROOT. Aborting."
   exit 1
 fi
 

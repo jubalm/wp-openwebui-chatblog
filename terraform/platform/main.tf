@@ -73,6 +73,11 @@ resource "ionoscloud_k8s_node_pool" "mks_pool" {
   cores_count       = 2
   storage_type      = "SSD"
   storage_size      = 20
+
+  lans {
+    id   = data.terraform_remote_state.infra.outputs.lan_id
+    dhcp = true
+  }
 }
 
 resource "ionoscloud_pg_cluster" "postgres" {
@@ -109,12 +114,15 @@ resource "kubernetes_namespace" "admin_apps" {
 }
 
 resource "helm_release" "authentik" {
-  name       = "authentik"
-  namespace  = kubernetes_namespace.admin_apps.metadata[0].name
-  repository = "https://charts.goauthentik.io/"
-  chart      = "authentik"
-  version    = "2024.6.0"
-  values     = [file("${path.module}/../../charts/authentik/my-values.yaml")]
+  name              = "authentik"
+  namespace         = kubernetes_namespace.admin_apps.metadata[0].name
+  repository        = "https://charts.goauthentik.io/"
+  chart             = "authentik"
+  version           = "2024.6.0"
+  values            = [file("${path.module}/../../charts/authentik/my-values.yaml")]
+  create_namespace  = true
+  dependency_update = true
+  timeout           = 600
 }
 
 resource "helm_release" "nginx_ingress" {
@@ -136,13 +144,23 @@ output "kubeconfig" {
   sensitive = true
 }
 
+variable "pg_username" {
+  type    = string
+  default = "authentikuser"
+}
+
+variable "pg_password" {
+  type    = string
+  default = "authentik_password"
+}
+
 output "postgres_connection" {
   value = {
     host     = ionoscloud_pg_cluster.postgres.dns_name
     port     = 5432
-    username = "postgres"
-    password = "password" # Set via IONOS Cloud console
+    username = var.pg_username
+    password = var.pg_password
     database = "postgres"
   }
   sensitive = true
-} 
+}
