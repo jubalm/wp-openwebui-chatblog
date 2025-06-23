@@ -1,3 +1,9 @@
+# This file has been split into three logical files:
+# - infrastructure/main.tf: foundational resources (datacenter, LAN)
+# - platform/main.tf: Kubernetes cluster, node pool
+# - tenant/main.tf: MariaDB and PostgreSQL clusters, per-tenant resources
+# Please see those files for the actual resource definitions.
+
 terraform {
   required_providers {
     ionoscloud = {
