@@ -1,0 +1,10 @@
+postgres:
+  host: "${POSTGRES_HOST}"
+  port: 5432
+  username: "authentikuser"
+  password: "${POSTGRES_PASSWORD}"
+  database: "authentik"
+
+secrets:
+  authentik_secret_key: "${AUTHENTIK_SECRET_KEY}"
+  admin_password: "${AUTHENTIK_ADMIN_PASSWORD}" 
