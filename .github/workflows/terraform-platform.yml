@@ -23,6 +23,16 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
+      - name: Install IONOS CLI
+        run: |
+          curl -sL https://github.com/ionos-cloud/ionosctl/releases/download/v6.8.5/ionosctl-6.8.5-linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local/bin
+      - name: Get kubeconfig from IONOS
+        env:
+          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
+        run: |
+          ionosctl login --token "$IONOS_TOKEN"
+          ionosctl k8s kubeconfig get --cluster-id <YOUR_CLUSTER_ID> > $HOME/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
       - name: Render Authentik Helm values
         run: bash charts/authentik/render-values.sh
       - name: Create/Update OpenAI API Key Secret
@@ -54,6 +64,16 @@ jobs:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
+      - name: Install IONOS CLI
+        run: |
+          curl -sL https://github.com/ionos-cloud/ionosctl/releases/download/v6.8.5/ionosctl-6.8.5-linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local/bin
+      - name: Get kubeconfig from IONOS
+        env:
+          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
+        run: |
+          ionosctl login --token "$IONOS_TOKEN"
+          ionosctl k8s kubeconfig get --cluster-id <YOUR_CLUSTER_ID> > $HOME/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
       - name: Render Authentik Helm values
         run: bash charts/authentik/render-values.sh
       - name: Create/Update OpenAI API Key Secret
