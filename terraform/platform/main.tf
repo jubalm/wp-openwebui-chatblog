@@ -135,6 +135,18 @@ resource "helm_release" "nginx_ingress" {
   # You can add custom values here if needed
 }
 
+resource "helm_release" "openwebui" {
+  name              = "openwebui"
+  namespace         = kubernetes_namespace.admin_apps.metadata[0].name
+  repository        = "https://helm.openwebui.com/"
+  chart             = "open-webui"
+  version           = "6.22.0"
+  values            = [file("${path.module}/../../charts/openwebui/my-values.yaml")]
+  create_namespace  = true
+  dependency_update = true
+  timeout           = 600
+}
+
 resource "ionoscloud_pg_database" "authentik" {
   cluster_id = ionoscloud_pg_cluster.postgres.id
   name       = "authentik"
