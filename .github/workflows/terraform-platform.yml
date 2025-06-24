@@ -1,0 +1,48 @@
+name: Terraform Platform
+
+on:
+  push:
+    paths:
+      - 'terraform/platform/**'
+      - '.github/workflows/terraform-platform.yml'
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/platform plan
+
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: platform-approval
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      TF_VAR_s3_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_s3_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AUTHENTIK_SECRET_KEY: ${{ secrets.AUTHENTIK_SECRET_KEY }}
+      AUTHENTIK_ADMIN_PASSWORD: ${{ secrets.AUTHENTIK_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Render Authentik Helm values
+        run: bash charts/authentik/render-values.sh
+      - name: Terraform Apply
+        run: terraform -chdir=terraform/platform apply -auto-approve 
