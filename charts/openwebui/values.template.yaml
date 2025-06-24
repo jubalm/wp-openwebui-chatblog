@@ -1,5 +1,11 @@
 # values.template.yaml for Open WebUI Helm chart
 
+ollama:
+  enabled: false
+
+pipelines:
+  enabled: false
+
 webui:
   extraEnvVars:
     - name: OPENAI_API_BASE_URL
