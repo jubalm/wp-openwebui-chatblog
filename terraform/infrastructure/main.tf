@@ -12,6 +12,7 @@ terraform {
     endpoints = {
       s3 = "https://s3-eu-central-2.ionoscloud.com"
     }
+    use_path_style              = true
     skip_credentials_validation = true
     skip_metadata_api_check     = true
     skip_requesting_account_id  = true
@@ -45,9 +46,9 @@ resource "ionoscloud_datacenter" "main" {
 }
 
 resource "ionoscloud_lan" "db_lan" {
-  datacenter_id   = ionoscloud_datacenter.main.id
-  name            = "db-lan"
-  public          = false
+  datacenter_id = ionoscloud_datacenter.main.id
+  name          = "db-lan"
+  public        = false
 }
 
 output "datacenter_id" {

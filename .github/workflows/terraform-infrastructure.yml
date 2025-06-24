@@ -9,19 +9,14 @@ on:
 jobs:
   plan:
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
-      - name: Render my-values.yaml
-        run: |
-          chmod +x charts/authentik/render-values.sh
-          ./charts/authentik/render-values.sh
-        env:
-          AUTHENTIK_SECRET_KEY: ${{ secrets.AUTHENTIK_SECRET_KEY }}
-          AUTHENTIK_ADMIN_PASSWORD: ${{ secrets.AUTHENTIK_ADMIN_PASSWORD }}
-          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
-          # Add any other required env vars here
       - name: Terraform Init
         run: terraform -chdir=terraform/infrastructure init
       - name: Terraform Plan
@@ -31,19 +26,18 @@ jobs:
     needs: plan
     runs-on: ubuntu-latest
     environment: infrastructure-approval
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      TF_VAR_s3_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_s3_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
-      - name: Render my-values.yaml
-        run: |
-          chmod +x charts/authentik/render-values.sh
-          ./charts/authentik/render-values.sh
-        env:
-          AUTHENTIK_SECRET_KEY: ${{ secrets.AUTHENTIK_SECRET_KEY }}
-          AUTHENTIK_ADMIN_PASSWORD: ${{ secrets.AUTHENTIK_ADMIN_PASSWORD }}
-          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
-          # Add any other required env vars here
+        with:
+          terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/infrastructure init
       - name: Terraform Apply
