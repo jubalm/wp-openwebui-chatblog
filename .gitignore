@@ -33,3 +33,4 @@ terraform.tfvars
 terraform/terraform.tfvars
 terraform/*.tfvars
 charts/authentik/my-values.yaml
+charts/openwebui/my-values.yaml
