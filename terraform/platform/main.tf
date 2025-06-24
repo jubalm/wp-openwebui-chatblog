@@ -135,6 +135,12 @@ resource "helm_release" "nginx_ingress" {
   # You can add custom values here if needed
 }
 
+resource "ionoscloud_pg_database" "authentik" {
+  cluster_id = ionoscloud_pg_cluster.postgres.id
+  name       = "authentik"
+  owner      = "authentikuser"
+}
+
 output "cluster_id" {
   value = ionoscloud_k8s_cluster.mks.id
 }
