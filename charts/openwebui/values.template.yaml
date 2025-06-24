@@ -32,4 +32,7 @@ webui:
     size: 4Gi
     accessModes:
       - ReadWriteOnce
-    storageClass: ""  # Set to your storage class if needed 
+    storageClass: ""  # Set to your storage class if needed
+  service:
+    type: LoadBalancer
+    port: 80
