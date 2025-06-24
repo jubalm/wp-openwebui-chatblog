@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+### When running terraform commands
+
+- always start with the project root and use `-chdir` to target a specific terraform module (subfolder)
+- always run `source .shellrc` from within the project root, before running terraform commands
