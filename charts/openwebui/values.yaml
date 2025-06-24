@@ -5,13 +5,9 @@ pipelines:
   enabled: false
 
 extraEnvVars:
-  - name: OPENAI_API_BASE_URL
-    value: 'https://openai.inference.de-txl.ionos.com/v1'
-  - name: OPENAI_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: openai-api-key
-        key: api-key
+  envFrom:
+    - secretRef:
+        name: openweui-env-secrets
 
 ingress:
   enabled: true

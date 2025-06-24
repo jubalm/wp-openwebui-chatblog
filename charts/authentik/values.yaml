@@ -1,0 +1,13 @@
+redis:
+  enabled: true
+
+authentik:
+  envFrom:
+    - secretRef:
+        name: authentik-env-secrets
+  postgresql:
+    host: ''
+    port: 5432
+    name: ''
+    user: ''
+    password: ''

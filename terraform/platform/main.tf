@@ -119,7 +119,7 @@ resource "helm_release" "authentik" {
   repository        = "https://charts.goauthentik.io/"
   chart             = "authentik"
   version           = "2024.6.0"
-  values            = [file("${path.module}/../../charts/authentik/my-values.yaml")]
+  values            = [file("${path.module}/../../charts/authentik/values.yaml")]
   create_namespace  = true
   dependency_update = true
   timeout           = 600
@@ -141,7 +141,7 @@ resource "helm_release" "openwebui" {
   repository        = "https://helm.openwebui.com/"
   chart             = "open-webui"
   version           = "6.22.0"
-  values            = [file("${path.module}/../../charts/openwebui/my-values.yaml")]
+  values            = [file("${path.module}/../../charts/openwebui/values.yaml")]
   create_namespace  = true
   dependency_update = true
   timeout           = 600
