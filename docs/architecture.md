@@ -15,7 +15,7 @@ This document describes the architecture for the IONOS MKS Proof of Concept (PoC
 - **GitHub Actions:** CI/CD, secrets management, and automation.
 - **Kubernetes Namespaces:**
   - `admin-apps`: Authentik, OpenWebUI
-  - `wordpress-tenant-<name>`: One per WordPress tenant
+  - `tenant-<name>`: One per WordPress tenant
 - **Ingress:** IP-based access to all UIs (no custom domains/TLS).
 - **Secrets:** Managed via GitHub Actions and Kubernetes Secrets.
 

@@ -6,11 +6,11 @@ Author: Jubal Mabaquiao
 
 ## Product Requirements Document: IONOS MKS PoC (Managed DBs, OpenWebUI, Authentik with MCP)
 
-**1. Introduction & Overview**
+### 1. Introduction & Overview
 
 This document outlines the requirements for a Proof of Concept (PoC) project. The primary goal is to demonstrate the deployment, integration, and operation of a suite of interconnected applications (OpenWebUI, multiple WordPress instances, Authentik) on IONOS Managed Kubernetes (MKS). The PoC will leverage IONOS Managed Database services (MariaDB for each WordPress tenant, PostgreSQL for Authentik) and will utilize Terraform for infrastructure provisioning. A key integration point is a custom "ModelContextProtocol" (MCP) enabling communication between OpenWebUI and each WordPress instance. This PoC aims to validate the chosen technology stack and integration patterns on the IONOS Cloud platform, with a core focus on multi-tenancy: a single OpenWebUI and Authentik instance, and multiple isolated WordPress instances (one per tenant).
 
-**2. Goals & Objectives**
+### 2. Goals & Objectives
 
 - **G1:** Successfully provision an IONOS MKS cluster and associated IONOS Managed Database instances (MariaDB, PostgreSQL) using Terraform.
 - **G2:** Deploy OpenWebUI, multiple WordPress instances, and Authentik containerized applications onto the MKS cluster.
@@ -20,15 +20,15 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - **G6:** Implement a secure and automated way to manage infrastructure and application secrets, leveraging GitHub Actions.
 - **G7:** Establish foundational understanding and best practices for deploying such a stack on IONOS Cloud for potential future development.
 
-**3. Target Audience/Users (for this PoC)**
+### 3. Target Audience/Users (for this PoC)
 
 - **PoC Implementer(s):** Developers/Engineers responsible for building, deploying, and validating the PoC.
 - **Technical Stakeholders:** Individuals evaluating the feasibility and architecture of using IONOS MKS and related services.
 - **PoC Testers:** Individuals who will execute the defined user flows to validate success criteria.
 
-**4. Scope**
+### 4. Scope
 
-**4.1. In Scope:**
+#### 4.1. In Scope:
 
 - Terraform scripts for MKS cluster, node pools, IONOS Managed MariaDB, and IONOS Managed PostgreSQL.
 - Terraform backend configured for IONOS Object Storage.
@@ -46,7 +46,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - Secrets management strategy using GitHub Actions and Kubernetes Secrets for sensitive data (database credentials, API keys, Authentik bootstrap tokens).
 - Demonstration of core user flows (SSO login, content generation via OWUI to any tenant's WordPress).
 
-**4.2. Out of Scope:**
+#### 4.2. Out of Scope:
 
 - Production-grade hardening, security scanning, or performance optimization.
 - Advanced monitoring, logging, and alerting beyond Kubernetes defaults.
@@ -56,7 +56,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - Data migration strategies.
 - Load testing or performance benchmarking.
 
-**5. Core Components & Technologies**
+### 5. Core Components & Technologies
 
 - **Cloud Platform:** IONOS Cloud
   - IONOS Managed Kubernetes (MKS) - Region: `de/txl`
@@ -77,7 +77,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
   - ModelContextProtocol (MCP - custom, via `Automattic/wordpress-mcp` plugin)
   - OpenAI API (for LLM interaction)
 
-**6. Functional Requirements**
+### 6. Functional Requirements
 
 - **FR1: Infrastructure Provisioning (Terraform)**
 
@@ -138,7 +138,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
     - Authenticate Terraform for infrastructure provisioning.
     - Populate Kubernetes Secrets with database connection details (sourced from Terraform outputs) and other application API keys.
 
-**7. Technical Requirements**
+### 7. Technical Requirements
 
 - **TR1: Infrastructure:** All infrastructure defined in Terraform, deployed in IONOS `de/txl` region. Use minimal viable resource sizes.
 - **TR2: Containerization:** All applications deployed as Docker containers on MKS. WordPress image to be custom-built to include necessary plugins.
@@ -148,7 +148,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - **TR4: State Persistence:** Terraform state in IONOS S3. Application data via Kubernetes PVCs.
 - **TR5: Namespacing:** Use `admin-apps` for Authentik & OpenWebUI, and `wordpress-tenants` for WordPress.
 
-**8. Assumptions**
+### 8. Assumptions
 
 - **A1:** IONOS MKS, Managed DBaaS, and Object Storage services in `de/txl` meet the basic functional needs for this PoC.
 - **A2:** Minimal viable instance/tier sizes for MKS and DBaaS are sufficient for PoC functionality (performance is not a primary goal).
@@ -161,7 +161,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - **A6:** The Automattic `wordpress-mcp` plugin (v0.2.2) is suitable for the MCP communication needs.
 - **A7:** IP-based access is sufficient for PoC validation; no DNS names or TLS setups are required for external access.
 
-**9. Open Questions / Research Items**
+### 9. Open Questions / Research Items
 
 - **OQ1:** Confirm the exact smallest instance types/tiers for `ionoscloud_k8s_node_pool`, `ionoscloud_dbaas_mariadb_cluster`, and `ionoscloud_dbaas_postgres_cluster` in `de/txl`.
 - **OQ2:** Verify the specific environment variable names OpenWebUI expects for `OPENAI_API_BASE_URL` and `OPENAI_API_KEY`.
@@ -170,7 +170,7 @@ This document outlines the requirements for a Proof of Concept (PoC) project. Th
 - **OQ5:** Determine the best strategy for the WordPress Docker image (official Apache-based vs. FPM + separate Nginx pod container) for simplicity vs. flexibility within the PoC.
 - **OQ6:** Define the exact mechanism/API endpoint by which OpenWebUI will "send a draft to WordPress" via MCP. (Assumed to be part of OpenWebUI's native features when an MCP integration is configured).
 
-**10. Success Criteria / Definition of Done**
+### 10. Success Criteria / Definition of Done
 
 The PoC will be considered successful when:
 
