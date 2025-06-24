@@ -1,4 +1,5 @@
 terraform {
+  required_version = ">= 1.9.0, <= 1.10.0"
   required_providers {
     ionoscloud = {
       source  = "ionos-cloud/ionoscloud"
@@ -57,4 +58,4 @@ output "datacenter_id" {
 
 output "lan_id" {
   value = ionoscloud_lan.db_lan.id
-} 
+}

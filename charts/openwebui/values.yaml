@@ -4,10 +4,9 @@ ollama:
 pipelines:
   enabled: false
 
-extraEnvVars:
-  envFrom:
-    - secretRef:
-        name: openweui-env-secrets
+envFrom:
+  - secretRef:
+      name: openwebui-env-secrets
 
 ingress:
   enabled: true
