@@ -4,8 +4,16 @@ terraform {
       source  = "ionos-cloud/ionoscloud"
       version = ">= 6.4.10"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.0.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0.0"
+    }
   }
-  
+
   backend "s3" {
     key    = "tenant/terraform.tfstate"
     bucket = "demo-vdc-backend-store"
@@ -26,34 +34,148 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = var.kubeconfig_path
+  }
+}
+
+variable "kubeconfig_path" {
+  type    = string
+  default = "~/.kube/config"
+}
+
 variable "ionos_token" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "wordpress_tenants" {
-  type    = list(string)
-  default = ["tenant1"]
+  type    = map(object({
+    admin_user     = string
+    admin_password = string
+    admin_email    = string
+  }))
+  default = {
+    "tenant1" = {
+      admin_user     = "tenant1-admin"
+      admin_password = "securepassword1"
+      admin_email    = "admin@tenant1.com"
+    },
+    "tenant2" = {
+      admin_user     = "tenant2-admin"
+      admin_password = "securepassword2"
+      admin_email    = "admin@tenant2.com"
+    }
+  }
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
 }
 
 resource "ionoscloud_mariadb_cluster" "mariadb" {
-  for_each        = toset(var.wordpress_tenants)
+  for_each        = var.wordpress_tenants
   display_name    = "mariadb-${each.key}"
   location        = "de/txl"
   mariadb_version = "10.6"
   instances       = 1
   cores           = 2
-  ram             = 4
-  storage_size    = 20
+  ram             = 2048
+  storage_size    = 10
 
   credentials {
     username = "wpuser"
-    password = "wp_password"
+    password = var.db_password
   }
 
   connections {
     datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
     lan_id        = data.terraform_remote_state.infra.outputs.lan_id
     cidr          = "10.7.222.100/24"
+  }
+
+  lifecycle {
+    ignore_changes = [credentials]
+  }
+}
+
+resource "kubernetes_namespace" "wordpress_tenants" {
+  for_each = var.wordpress_tenants
+  metadata {
+    name = each.key
+  }
+}
+
+resource "kubernetes_secret" "db_credentials" {
+  for_each = var.wordpress_tenants
+  metadata {
+    name      = "wordpress-${each.key}-db-credentials"
+    namespace = kubernetes_namespace.wordpress_tenants[each.key].metadata[0].name
+  }
+  data = {
+    password = base64encode(var.db_password)
+  }
+  type = "Opaque"
+}
+
+resource "helm_release" "wordpress" {
+  for_each          = var.wordpress_tenants
+  name              = "wordpress-${each.key}"
+  namespace         = kubernetes_namespace.wordpress_tenants[each.key].metadata[0].name
+  chart             = "${path.module}/../../charts/wordpress"
+  dependency_update = true
+  timeout           = 600
+
+  values = [
+    yamlencode({
+      fullnameOverride = "wordpress-${each.key}"
+      image = {
+        repository = "your-repo/your-wordpress-image" # Replace with your actual image repo
+        tag        = "latest"
+      }
+      site = {
+        url          = "http://wordpress-${each.key}.local"
+        title        = "WordPress ${each.key}"
+        adminUser    = each.value.admin_user
+        adminPassword = each.value.admin_password
+        adminEmail   = each.value.admin_email
+      }
+      database = {
+        host     = ionoscloud_mariadb_cluster.mariadb[each.key].dns_name
+        user     = "wpuser"
+        name     = "wordpress"
+        password = var.db_password # This will be used by the secret template
+      }
+      ingress = {
+        enabled = true
+        hosts = [
+          {
+            host  = "wordpress-${each.key}.local"
+            paths = [{ path = "/", pathType = "ImplementationSpecific" }]
+          }
+        ]
+      }
+      persistence = {
+        enabled = true
+      }
+    })
+  ]
+
+  depends_on = [
+    kubernetes_secret.db_credentials
+  ]
+}
+
+output "wordpress_urls" {
+  value = {
+    for tenant, release in helm_release.wordpress :
+    tenant => "http://wordpress-${tenant}.local"
   }
 }
 
@@ -63,9 +185,8 @@ output "mariadb_connections" {
     tenant => {
       host     = cluster.dns_name
       port     = 3306
-      username = "root"
-      password = "password" # Set via IONOS Cloud console
-      database = "default"
+      username = "wpuser"
+      database = "wordpress"
     }
   }
   sensitive = true

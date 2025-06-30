@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wordpress.fullname" . }}
+  labels:
+    {{- include "wordpress.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "wordpress.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "wordpress.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "wordpress.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: {{ .Values.database.host | quote }}
+            - name: WORDPRESS_DB_PORT
+              value: {{ .Values.database.port | quote }}
+            - name: WORDPRESS_DB_USER
+              value: {{ .Values.database.user | quote }}
+            - name: WORDPRESS_DB_NAME
+              value: {{ .Values.database.name | quote }}
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-db-credentials" (include "wordpress.fullname" .) }}
+                  key: password
+            - name: SITE_URL
+              value: {{ .Values.site.url | quote }}
+            - name: SITE_TITLE
+              value: {{ .Values.site.title | quote }}
+            - name: SITE_ADMIN_USER
+              value: {{ .Values.site.adminUser | quote }}
+            - name: SITE_ADMIN_PASSWORD
+              value: {{ .Values.site.adminPassword | quote }}
+            - name: SITE_ADMIN_EMAIL
+              value: {{ .Values.site.adminEmail | quote }}
+            - name: ENABLE_AUTHENTIK_SSO
+              value: {{ .Values.authentik.enabled | quote }}
+            - name: AUTHENTIK_URL
+              value: {{ .Values.authentik.url | quote }}
+            - name: WORDPRESS_OAUTH_CLIENT_ID
+              value: {{ .Values.authentik.clientId | quote }}
+            - name: WORDPRESS_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-oidc-credentials" (include "wordpress.fullname" .) }}
+                  key: clientSecret
+          volumeMounts:
+            - name: wordpress-data
+              mountPath: /var/www/html
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: wordpress-data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "wordpress.fullname" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
