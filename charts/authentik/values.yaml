@@ -2,14 +2,76 @@ redis:
   enabled: true
 
 authentik:
-  secret_key: "dummy-will-be-overridden-by-env"
+  secret:
+    create: true
+    name: authentik-env-secrets
+    secret_key: "REPLACE_ME"
+    postgres_password: "REPLACE_ME"
+    postgres_host: "REPLACE_ME"
+    postgres_user: "REPLACE_ME"
+    postgres_name: "REPLACE_ME"
   postgresql:
     host: ''
     port: 5432
     name: ''
     user: ''
-    password: ''
+    password:
+      secretKeyRef:
+        name: "{{ .Values.authentik.secret.name }}"
+        key: postgres_password
 
-envFrom:
-  - secretRef:
-      name: authentik-env-secrets
+server:
+  env:
+    - name: AUTHENTIK_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: secret_key
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_password
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_host
+    - name: AUTHENTIK_POSTGRESQL__USER
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_user
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_name
+
+worker:
+  env:
+    - name: AUTHENTIK_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: secret_key
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_password
+    - name: AUTHENTIK_POSTGRESQL__HOST
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_host
+    - name: AUTHENTIK_POSTGRESQL__USER
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_user
+    - name: AUTHENTIK_POSTGRESQL__NAME
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Values.authentik.secret.name }}"
+          key: postgres_name
