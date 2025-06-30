@@ -4,17 +4,17 @@ This document outlines the remaining work required to complete the PoC as define
 
 ### 1. WordPress Deployment
 
-- [ ] Create a Helm chart for the WordPress deployment in the `charts/wordpress` directory.
-  - [ ] Define `Deployment` and `Service` resources.
-  - [ ] Configure a `PersistentVolumeClaim` for WordPress data (`/var/www/html`).
-  - [ ] Create an `Ingress` resource for external access.
-  - [ ] Use a `values.yaml` file to manage configurable parameters (image tag, tenant name, etc.).
+- [x] Create a Helm chart for the WordPress deployment in the `charts/wordpress` directory.
+  - [x] Define `Deployment` and `Service` resources.
+  - [x] Configure a `PersistentVolumeClaim` for WordPress data (`/var/www/html`).
+  - [x] Create an `Ingress` resource for external access.
+  - [x] Use a `values.yaml` file to manage configurable parameters (image tag, tenant name, etc.).
 - [ ] Update the `docker/wordpress/Dockerfile` to include the necessary plugins:
-  - [ ] `wordpress-mcp` plugin (v0.2.2).
-  - [ ] An open-source OIDC client plugin (e.g., "OpenID Connect Generic Client by daggerhart").
+  - [x] `wordpress-mcp` plugin (v0.2.2).
+  - [x] An open-source OIDC client plugin (e.g., "OpenID Connect Generic Client by daggerhart").
   - [ ] The custom plugin for OpenWebUI integration (once developed).
 - [ ] Build and push the custom WordPress Docker image to a container registry.
-- [ ] Update `terraform/tenant/main.tf` to deploy the WordPress Helm chart for each tenant.
+- [x] Update `terraform/tenant/main.tf` to deploy the WordPress Helm chart for each tenant.
 
 ### 2. Integration & Secrets Automation (GitHub Actions)
 
