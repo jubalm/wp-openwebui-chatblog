@@ -2,18 +2,17 @@
 
 This guide explains how to configure the necessary environments in your GitHub repository. This setup is essential to enable the manual approval gates in the `deploy.yml` workflow, ensuring that no infrastructure changes are applied without explicit review.
 
-Our workflow is configured to use three environments:
+Our workflow is configured to use two environments that require approval:
 1.  `infrastructure`
 2.  `platform`
-3.  `tenant`
 
-You will need to create each of these in the GitHub UI.
+You will need to create each of these in the GitHub UI. The `tenant` deployment will happen automatically without approval.
 
 ---
 
 ### Step-by-Step Instructions
 
-Follow these steps for each of the environment names listed above (`infrastructure`, `platform`, and `tenant`).
+Follow these steps for each of the environment names listed above (`infrastructure` and `platform`).
 
 1.  **Navigate to Repository Settings:**
     In your GitHub repository, click on the **Settings** tab.
@@ -47,7 +46,7 @@ Follow these steps for each of the environment names listed above (`infrastructu
     Click **Save protection rules**.
 
 7.  **Repeat for Other Environments:**
-    Repeat steps 3 through 6 for the other environments: `platform` and `tenant`.
+    Repeat steps 3 through 6 for the `platform` environment.
 
 ---
 
