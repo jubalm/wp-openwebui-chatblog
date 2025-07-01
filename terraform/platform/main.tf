@@ -103,30 +103,11 @@ resource "kubernetes_namespace" "admin_apps" {
 resource "helm_release" "authentik" {
   name              = "authentik"
   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-  repository        = "https://charts.goauthentik.io/"
-  chart             = "authentik"
+  chart             = "../../charts/authentik"
   version           = "2024.6.0"
   create_namespace  = true
   dependency_update = true
   timeout           = 600
-
-  values = [
-    yamlencode({
-      authentik = {
-        secret_key = random_password.authentik_secret_key.result
-      }
-      postgresql = {
-        enabled = false
-      }
-      extraEnvFrom = [
-        {
-          secretRef = {
-            name = kubernetes_secret.authentik_env.metadata[0].name
-          }
-        }
-      ]
-    })
-  ]
 }
 
 resource "random_password" "authentik_secret_key" {
