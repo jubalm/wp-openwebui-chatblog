@@ -119,24 +119,6 @@ jobs:
         run: terraform -chdir=terraform/platform init
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
-      - name: Get Kubeconfig & Secrets
-        id: get_outputs
-        run: |
-          KUBECONFIG_CONTENT=$(terraform -chdir=terraform/platform output -raw kubeconfig)
-          echo "kubeconfig_content<<EOF" >> $GITHUB_OUTPUT
-          echo "$KUBECONFIG_CONTENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          PG_JSON=$(terraform -chdir=terraform/platform output -json postgres_connection)
-          echo "pg_host=$(echo $PG_JSON | jq -r .host)" >> $GITHUB_OUTPUT
-          echo "pg_user=$(echo $PG_JSON | jq -r .username)" >> $GITHUB_OUTPUT
-          echo "pg_password=$(echo $PG_JSON | jq -r .password)" >> $GITHUB_OUTPUT
-          echo "pg_name=authentik" >> $GITHUB_OUTPUT
-      - name: Setup Kubectl
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ steps.get_outputs.outputs.kubeconfig_content }}" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
       - name: Create/Update Authentik Secret
         run: |
           kubectl create secret generic authentik-env-secrets \
@@ -172,16 +154,10 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
-      - name: Setup Kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          terraform -chdir=terraform/platform init
-          terraform -chdir=terraform/platform output -raw kubeconfig > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
       - name: Terraform Init
         run: terraform -chdir=terraform/tenant init
       - name: Terraform Plan
-        run: terraform -chdir=terraform/tenant plan -out=tfplan -var="kubeconfig_path=$HOME/.kube/config"
+        run: terraform -chdir=terraform/tenant plan -out=tfplan
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
