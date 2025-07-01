@@ -43,14 +43,6 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
-provider "kubernetes" {
-  config_path = pathexpand("~/.kube/config")
-}
-
-provider "helm" {
-  config_path = pathexpand("~/.kube/config")
-}
-
 variable "ionos_token" {
   type = string
 }
