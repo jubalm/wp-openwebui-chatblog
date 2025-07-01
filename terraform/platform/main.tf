@@ -44,38 +44,18 @@ provider "ionoscloud" {
 }
 
 provider "kubernetes" {
-  host = data.ionoscloud_k8s_cluster.mks.host
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "ionosctl"
-    args = [
-      "k8s",
-      "kubeconfig",
-      "generate",
-      "--cluster-id",
-      data.ionoscloud_k8s_cluster.mks.id,
-      "--token"
-    ]
-  }
+  host                   = data.ionoscloud_k8s_cluster.mks.api_endpoint
+  client_certificate     = base64decode(data.ionoscloud_k8s_cluster.mks.client_certificate)
+  client_key             = base64decode(data.ionoscloud_k8s_cluster.mks.client_key)
+  cluster_ca_certificate = base64decode(data.ionoscloud_k8s_cluster.mks.cluster_ca_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    host = data.ionoscloud_k8s_cluster.mks.host
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "ionosctl"
-      args = [
-        "k8s",
-        "kubeconfig",
-        "generate",
-        "--cluster-id",
-        data.ionoscloud_k8s_cluster.mks.id,
-        "--token"
-      ]
-    }
+    host                   = data.ionoscloud_k8s_cluster.mks.api_endpoint
+    client_certificate     = base64decode(data.ionoscloud_k8s_cluster.mks.client_certificate)
+    client_key             = base64decode(data.ionoscloud_k8s_cluster.mks.client_key)
+    cluster_ca_certificate = base64decode(data.ionoscloud_k8s_cluster.mks.cluster_ca_certificate)
   }
 }
 
