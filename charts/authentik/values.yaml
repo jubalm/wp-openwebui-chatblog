@@ -16,7 +16,7 @@ authentik:
         key: postgres_password
 
 server:
-  env:
+  extraEnvs:
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
         secretKeyRef:
@@ -44,7 +44,7 @@ server:
           key: postgres_name
 
 worker:
-  env:
+  extraEnvs:
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
         secretKeyRef:
