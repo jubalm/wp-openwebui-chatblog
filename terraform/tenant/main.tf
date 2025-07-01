@@ -39,18 +39,12 @@ provider "ionoscloud" {
 }
 
 provider "kubernetes" {
-  host                   = data.ionoscloud_k8s_cluster.mks.api_endpoint
-  client_certificate     = base64decode(data.ionoscloud_k8s_cluster.mks.client_certificate)
-  client_key             = base64decode(data.ionoscloud_k8s_cluster.mks.client_key)
-  cluster_ca_certificate = base64decode(data.ionoscloud_k8s_cluster.mks.cluster_ca_certificate)
+  kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
 }
 
 provider "helm" {
   kubernetes {
-    host                   = data.ionoscloud_k8s_cluster.mks.api_endpoint
-    client_certificate     = base64decode(data.ionoscloud_k8s_cluster.mks.client_certificate)
-    client_key             = base64decode(data.ionoscloud_k8s_cluster.mks.client_key)
-    cluster_ca_certificate = base64decode(data.ionoscloud_k8s_cluster.mks.cluster_ca_certificate)
+    kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
   }
 }
 
