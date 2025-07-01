@@ -38,6 +38,42 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
+provider "kubernetes" {
+  host = data.ionoscloud_k8s_cluster.mks.host
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "ionosctl"
+    args = [
+      "k8s",
+      "kubeconfig",
+      "generate",
+      "--cluster-id",
+      data.ionoscloud_k8s_cluster.mks.id,
+      "--token"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host = data.ionoscloud_k8s_cluster.mks.host
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "ionosctl"
+      args = [
+        "k8s",
+        "kubeconfig",
+        "generate",
+        "--cluster-id",
+        data.ionoscloud_k8s_cluster.mks.id,
+        "--token"
+      ]
+    }
+  }
+}
+
 variable "ionos_token" {
   type      = string
   sensitive = true

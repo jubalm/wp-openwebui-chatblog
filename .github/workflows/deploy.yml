@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -53,8 +51,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -68,13 +64,6 @@ jobs:
         run: terraform -chdir=terraform/infrastructure init
       - name: Terraform Apply
         run: terraform -chdir=terraform/infrastructure apply -auto-approve tfplan
-      - name: Save Kubeconfig
-        run: terraform -chdir=terraform/infrastructure output -raw kubeconfig > kubeconfig
-      - name: Upload Kubeconfig
-        uses: actions/upload-artifact@v4
-        with:
-          name: kubeconfig
-          path: kubeconfig
 
   # ======================================================================================
   # 2. Platform Module
@@ -87,27 +76,18 @@ jobs:
       TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download Kubeconfig
-        uses: actions/download-artifact@v4
-        with:
-          name: kubeconfig
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
       - name: Terraform Plan
         run: terraform -chdir=terraform/platform plan -out=tfplan
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
@@ -115,7 +95,7 @@ jobs:
           path: terraform/platform/tfplan
 
   apply-platform:
-    name: '2. Apply Platform & Inject Secrets'
+    name: '2. Apply Platform'
     runs-on: ubuntu-latest
     needs: plan-platform
     environment: platform
@@ -123,16 +103,10 @@ jobs:
       TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download Kubeconfig
-        uses: actions/download-artifact@v4
-        with:
-          name: kubeconfig
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -144,43 +118,8 @@ jobs:
           path: terraform/platform
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-      - name: Get Kubeconfig & Secrets
-        id: get_outputs
-        run: |
-          PG_JSON=$(terraform -chdir=terraform/platform output -json postgres_connection)
-          echo "pg_host=$(echo $PG_JSON | jq -r .host)" >> $GITHUB_OUTPUT
-          echo "pg_user=$(echo $PG_JSON | jq -r .username)" >> $GITHUB_OUTPUT
-          echo "pg_password=$(echo $PG_JSON | jq -r .password)" >> $GITHUB_OUTPUT
-          echo "pg_name=authentik" >> $GITHUB_OUTPUT
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
-      - name: Setup Kubectl
-        run: |
-          mkdir -p $HOME/.kube
-          cp kubeconfig $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-      - name: Create/Update Authentik Secret
-        run: |
-          kubectl create secret generic authentik-env-secrets \
-            --namespace=admin-apps \
-            --from-literal=secret_key=$(openssl rand -hex 32) \
-            --from-literal=postgres_host=${{ steps.get_outputs.outputs.pg_host }} \
-            --from-literal=postgres_user=${{ steps.get_outputs.outputs.pg_user }} \
-            --from-literal=postgres_password=${{ steps.get_outputs.outputs.pg_password }} \
-            --from-literal=postgres_name=${{ steps.get_outputs.outputs.pg_name }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-      - name: Create/Update OpenWebUI Secret
-        run: |
-          kubectl create secret generic openwebui-env-secrets \
-            --namespace=admin-apps \
-            --from-literal=OPENAI_API_KEY=${{ env.OPENAI_API_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
 
   # ======================================================================================
   # 3. Tenant Module
@@ -196,20 +135,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download Kubeconfig
-        uses: actions/download-artifact@v4
-        with:
-          name: kubeconfig
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/tenant init
-        env:
-          KUBECONFIG: ${{ github.workspace }}/kubeconfig
       - name: Terraform Plan
         run: terraform -chdir=terraform/tenant plan -out=tfplan
       - name: Upload Plan
@@ -230,18 +161,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
-      - name: Setup Kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          terraform -chdir=terraform/platform init
-          terraform -chdir=terraform/platform output -raw kubeconfig > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
       - name: Download Plan
         uses: actions/download-artifact@v4
         with:

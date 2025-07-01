@@ -30,4 +30,8 @@ data "terraform_remote_state" "platform" {
     skip_region_validation      = true
     skip_s3_checksum            = true
   }
+}
+
+data "ionoscloud_k8s_cluster" "mks" {
+  name = data.terraform_remote_state.infra.outputs.cluster_name
 } 

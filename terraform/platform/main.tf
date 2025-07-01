@@ -43,6 +43,42 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
+provider "kubernetes" {
+  host = data.ionoscloud_k8s_cluster.mks.host
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "ionosctl"
+    args = [
+      "k8s",
+      "kubeconfig",
+      "generate",
+      "--cluster-id",
+      data.ionoscloud_k8s_cluster.mks.id,
+      "--token"
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host = data.ionoscloud_k8s_cluster.mks.host
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "ionosctl"
+      args = [
+        "k8s",
+        "kubeconfig",
+        "generate",
+        "--cluster-id",
+        data.ionoscloud_k8s_cluster.mks.id,
+        "--token"
+      ]
+    }
+  }
+}
+
 variable "ionos_token" {
   type = string
 }
@@ -95,14 +131,18 @@ resource "helm_release" "authentik" {
   values = [
     yamlencode({
       authentik = {
-        secret = {
-          secret_key        = random_password.authentik_secret_key.result
-          postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
-          postgres_user     = var.pg_username
-          postgres_password = var.pg_password
-          postgres_name     = ionoscloud_pg_database.authentik.name
-        }
+        secret_key = random_password.authentik_secret_key.result
       }
+      postgresql = {
+        enabled = false
+      }
+      envFrom = [
+        {
+          secretRef = {
+            name = kubernetes_secret.authentik_env.metadata[0].name
+          }
+        }
+      ]
     })
   ]
 }
@@ -163,23 +203,10 @@ resource "helm_release" "openwebui" {
 
   values = [
     yamlencode({
-      extraEnvVars = [
+      envFrom = [
         {
-          name = "OPENAI_API_KEY"
-          valueFrom = {
-            secretKeyRef = {
-              name = "openwebui-env-secrets"
-              key  = "openai-api-key"
-            }
-          }
-        },
-        {
-          name = "OPENAI_API_BASE_URL"
-          valueFrom = {
-            secretKeyRef = {
-              name = "openwebui-env-secrets"
-              key  = "openai-api-base-url"
-            }
+          secretRef = {
+            name = kubernetes_secret.openwebui_env.metadata[0].name
           }
         }
       ]
@@ -193,9 +220,35 @@ resource "ionoscloud_pg_database" "authentik" {
   owner      = "authentikuser"
 }
 
+resource "kubernetes_secret" "authentik_env" {
+  metadata {
+    name      = "authentik-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    secret_key        = random_password.authentik_secret_key.result
+    postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
+    postgres_user     = var.pg_username
+    postgres_password = var.pg_password
+    postgres_name     = ionoscloud_pg_database.authentik.name
+  }
+}
 
+resource "kubernetes_secret" "openwebui_env" {
+  metadata {
+    name      = "openwebui-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    OPENAI_API_KEY      = var.openai_api_key
+    OPENAI_API_BASE_URL = "https://api.ionos.com/llm/v1"
+  }
+}
 
-
+variable "openai_api_key" {
+  type      = string
+  sensitive = true
+}
 
 variable "pg_username" {
   type    = string
@@ -205,10 +258,5 @@ variable "pg_username" {
 variable "pg_password" {
   type    = string
   default = "authentik_password"
-}
-
-output "kubeconfig" {
-  value     = data.ionoscloud_k8s_cluster.mks.kube_config
-  sensitive = true
 }
 
