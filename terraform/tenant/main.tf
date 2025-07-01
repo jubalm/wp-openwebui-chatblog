@@ -136,7 +136,7 @@ resource "helm_release" "wordpress" {
     yamlencode({
       fullnameOverride = "wordpress-${each.key}"
       image = {
-        repository = "wp-openwebui.cr.de-fra.ionos.com/wp-openwebui"
+        repository = "wp-openwebui.cr.de-fra.ionos.com/wp-openwebui/wordpress"
         tag        = "latest"
       }
       site = {
