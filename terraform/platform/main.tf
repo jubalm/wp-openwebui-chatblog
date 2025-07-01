@@ -118,7 +118,7 @@ resource "helm_release" "authentik" {
       postgresql = {
         enabled = false
       }
-      envFrom = [
+      extraEnvFrom = [
         {
           secretRef = {
             name = kubernetes_secret.authentik_env.metadata[0].name
@@ -185,7 +185,7 @@ resource "helm_release" "openwebui" {
 
   values = [
     yamlencode({
-      envFrom = [
+      extraEnvFrom = [
         {
           secretRef = {
             name = kubernetes_secret.openwebui_env.metadata[0].name
