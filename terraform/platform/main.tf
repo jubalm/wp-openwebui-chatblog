@@ -48,9 +48,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
-    config_path = pathexpand("~/.kube/config")
-  }
+  config_path = pathexpand("~/.kube/config")
 }
 
 variable "ionos_token" {
