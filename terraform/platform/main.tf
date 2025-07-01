@@ -37,15 +37,7 @@ terraform {
 
 
 
-provider "kubernetes" {
-  kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
-}
 
-provider "helm" {
-  kubernetes = {
-    kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
-  }
-}
 
 provider "ionoscloud" {
   token = var.ionos_token
@@ -203,10 +195,7 @@ resource "ionoscloud_pg_database" "authentik" {
 
 
 
-output "kubeconfig" {
-  value     = data.ionoscloud_k8s_cluster.mks.kube_config
-  sensitive = true
-}
+
 
 variable "pg_username" {
   type    = string
@@ -218,13 +207,8 @@ variable "pg_password" {
   default = "authentik_password"
 }
 
-output "postgres_connection" {
-  value = {
-    host     = ionoscloud_pg_cluster.postgres.dns_name
-    port     = 5432
-    username = var.pg_username
-    password = var.pg_password
-    database = "postgres"
-  }
+output "kubeconfig" {
+  value     = data.ionoscloud_k8s_cluster.mks.kube_config
   sensitive = true
 }
+
