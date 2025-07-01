@@ -102,4 +102,13 @@ output "cluster_name" {
   value = ionoscloud_k8s_cluster.mks.name
 }
 
+data "ionoscloud_k8s_cluster" "mks" {
+  name = ionoscloud_k8s_cluster.mks.name
+}
+
+output "kubeconfig" {
+  value     = data.ionoscloud_k8s_cluster.mks.kube_config
+  sensitive = true
+}
+
 
