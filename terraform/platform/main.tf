@@ -13,6 +13,10 @@ terraform {
       source  = "ionos-cloud/ionoscloud"
       version = ">= 6.4.10"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.6.0"
+    }
   }
   
   backend "s3" {
@@ -135,10 +139,28 @@ resource "helm_release" "authentik" {
   repository        = "https://charts.goauthentik.io/"
   chart             = "authentik"
   version           = "2024.6.0"
-  values            = [file("${path.module}/../../charts/authentik/values.yaml")]
   create_namespace  = true
   dependency_update = true
   timeout           = 600
+
+  values = [
+    yamlencode({
+      authentik = {
+        secret = {
+          secret_key        = random_password.authentik_secret_key.result
+          postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
+          postgres_user     = var.pg_username
+          postgres_password = var.pg_password
+          postgres_name     = ionoscloud_pg_database.authentik.name
+        }
+      }
+    })
+  ]
+}
+
+resource "random_password" "authentik_secret_key" {
+  length  = 32
+  special = false
 }
 
 resource "kubernetes_ingress_v1" "authentik_ingress" {
@@ -186,10 +208,34 @@ resource "helm_release" "openwebui" {
   repository        = "https://helm.openwebui.com/"
   chart             = "open-webui"
   version           = "6.22.0"
-  values            = [file("${path.module}/../../charts/openwebui/values.yaml")]
   create_namespace  = true
   dependency_update = true
   timeout           = 600
+
+  values = [
+    yamlencode({
+      extraEnvVars = [
+        {
+          name = "OPENAI_API_KEY"
+          valueFrom = {
+            secretKeyRef = {
+              name = "openwebui-env-secrets"
+              key  = "openai-api-key"
+            }
+          }
+        },
+        {
+          name = "OPENAI_API_BASE_URL"
+          valueFrom = {
+            secretKeyRef = {
+              name = "openwebui-env-secrets"
+              key  = "openai-api-base-url"
+            }
+          }
+        }
+      ]
+    })
+  ]
 }
 
 resource "ionoscloud_pg_database" "authentik" {

@@ -3,13 +3,8 @@ redis:
 
 authentik:
   secret:
-    create: true
+    create: false
     name: authentik-env-secrets
-    secret_key: "REPLACE_ME"
-    postgres_password: "REPLACE_ME"
-    postgres_host: "REPLACE_ME"
-    postgres_user: "REPLACE_ME"
-    postgres_name: "REPLACE_ME"
   postgresql:
     host: ''
     port: 5432
