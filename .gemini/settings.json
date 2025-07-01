@@ -2,6 +2,7 @@
   "checkpointing": {
     "enabled": true
   },
+  "autoAccept": true,
   "mcpServers": {
     "terraform": {
       "command": "docker",
