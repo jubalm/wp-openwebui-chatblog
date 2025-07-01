@@ -141,6 +141,35 @@ resource "helm_release" "authentik" {
   timeout           = 600
 }
 
+resource "kubernetes_ingress_v1" "authentik_ingress" {
+  metadata {
+    name      = "authentik-ingress"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+    }
+  }
+
+  spec {
+    rule {
+      http {
+        path {
+          path = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "authentik"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
   namespace        = "ingress-nginx"
