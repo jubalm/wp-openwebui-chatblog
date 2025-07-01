@@ -18,14 +18,14 @@ This document outlines the remaining work required to complete the PoC as define
 
 ### 2. Integration & Secrets Automation (GitHub Actions)
 
-- [ ] Create a GitHub Actions workflow (`.github/workflows/deploy.yml`) to automate the deployment.
-- [ ] **Terraform to Kubernetes Secret Injection:**
-  - [ ] The workflow should run `terraform apply` for the `infrastructure`, `platform`, and `tenant` modules.
-  - [ ] The workflow should capture the Terraform outputs (database credentials, etc.).
-  - [ ] The workflow should use `kubectl` to create or update the Kubernetes Secrets (`authentik-env-secrets`, `openwebui-env-secrets`, and a new one for each WordPress tenant) with the values from the Terraform outputs.
-- [ ] **Secrets Management:**
-  - [ ] Ensure all sensitive values (`IONOS_TOKEN`, etc.) are stored as GitHub Actions secrets and used in the workflow.
-  - [ ] Remove any hardcoded passwords from the Terraform files (e.g., the MariaDB password in `terraform/tenant/main.tf`).
+- [x] Create a GitHub Actions workflow (`.github/workflows/deploy.yml`) to automate the deployment.
+- [x] **Terraform to Kubernetes Secret Injection:**
+  - [x] The workflow should run `terraform apply` for the `infrastructure`, `platform`, and `tenant` modules.
+  - [x] The workflow should capture the Terraform outputs (database credentials, etc.).
+  - [x] The workflow should use `kubectl` to create or update the Kubernetes Secrets (`authentik-env-secrets`, `openwebui-env-secrets`, and a new one for each WordPress tenant) with the values from the Terraform outputs.
+- [x] **Secrets Management:**
+  - [x] Ensure all sensitive values (`IONOS_TOKEN`, etc.) are stored as GitHub Actions secrets and used in the workflow.
+  - [x] Remove any hardcoded passwords from the Terraform files (e.g., the MariaDB password in `terraform/tenant/main.tf`).
 
 ### 3. Application Configuration (Post-Deployment)
 
