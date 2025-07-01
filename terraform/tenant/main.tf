@@ -38,16 +38,6 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
-provider "kubernetes" {
-  config_path = data.terraform_remote_state.platform.outputs.kubeconfig
-}
-
-provider "helm" {
-  kubernetes {
-    config_path = data.terraform_remote_state.platform.outputs.kubeconfig
-  }
-}
-
 variable "ionos_token" {
   type      = string
   sensitive = true
