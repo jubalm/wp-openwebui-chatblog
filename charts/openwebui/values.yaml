@@ -14,12 +14,12 @@ extraEnvVars:
   - name: OPENAI_API_KEY
     valueFrom:
       secretKeyRef:
-        name: "{{ .Values.secret.name }}"
+        name: "openwebui-env-secrets"
         key: openai-api-key
   - name: OPENAI_API_BASE_URL
     valueFrom:
       secretKeyRef:
-        name: "{{ .Values.secret.name }}"
+        name: "openwebui-env-secrets"
         key: openai-api-base-url
 
 ingress:

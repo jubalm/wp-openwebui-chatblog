@@ -17,7 +17,7 @@ authentik:
     user: ''
     password:
       secretKeyRef:
-        name: "{{ .Values.authentik.secret.name }}"
+        name: "authentik-env-secrets"
         key: postgres_password
 
 server:
@@ -25,27 +25,27 @@ server:
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: secret_key
     - name: AUTHENTIK_POSTGRESQL__PASSWORD
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_password
     - name: AUTHENTIK_POSTGRESQL__HOST
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_host
     - name: AUTHENTIK_POSTGRESQL__USER
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_user
     - name: AUTHENTIK_POSTGRESQL__NAME
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_name
 
 worker:
@@ -53,25 +53,25 @@ worker:
     - name: AUTHENTIK_SECRET_KEY
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: secret_key
     - name: AUTHENTIK_POSTGRESQL__PASSWORD
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_password
     - name: AUTHENTIK_POSTGRESQL__HOST
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_host
     - name: AUTHENTIK_POSTGRESQL__USER
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_user
     - name: AUTHENTIK_POSTGRESQL__NAME
       valueFrom:
         secretKeyRef:
-          name: "{{ .Values.authentik.secret.name }}"
+          name: "authentik-env-secrets"
           key: postgres_name
