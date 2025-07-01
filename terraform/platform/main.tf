@@ -104,7 +104,6 @@ resource "helm_release" "authentik" {
   name              = "authentik"
   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
   chart             = "../../charts/authentik"
-  version           = "2024.6.0"
   create_namespace  = true
   dependency_update = true
   timeout           = 600
