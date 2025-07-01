@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.1.0"
+    }
   }
 
   backend "s3" {
@@ -74,9 +78,10 @@ variable "wordpress_tenants" {
   }
 }
 
-variable "db_password" {
-  type      = string
-  sensitive = true
+resource "random_password" "db_password" {
+  for_each = var.wordpress_tenants
+  length   = 16
+  special  = true
 }
 
 resource "ionoscloud_mariadb_cluster" "mariadb" {
@@ -91,7 +96,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
 
   credentials {
     username = "wpuser"
-    password = var.db_password
+    password = random_password.db_password[each.key].result
   }
 
   connections {
@@ -119,7 +124,7 @@ resource "kubernetes_secret" "db_credentials" {
     namespace = kubernetes_namespace.wordpress_tenants[each.key].metadata[0].name
   }
   data = {
-    password = base64encode(var.db_password)
+    password = base64encode(random_password.db_password[each.key].result)
   }
   type = "Opaque"
 }
@@ -150,7 +155,7 @@ resource "helm_release" "wordpress" {
         host     = ionoscloud_mariadb_cluster.mariadb[each.key].dns_name
         user     = "wpuser"
         name     = "wordpress"
-        password = var.db_password # This will be used by the secret template
+        password = random_password.db_password[each.key].result # This will be used by the secret template
       }
       ingress = {
         enabled = true
