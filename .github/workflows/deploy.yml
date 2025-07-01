@@ -27,6 +27,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/infrastructure init
       - name: Terraform Plan
@@ -51,6 +53,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Download Plan
         uses: actions/download-artifact@v4
         with:
@@ -77,6 +81,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
       - name: Terraform Plan
@@ -102,6 +108,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Download Plan
         uses: actions/download-artifact@v4
         with:
@@ -162,6 +170,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Setup Kubeconfig
         run: |
           mkdir -p $HOME/.kube
@@ -192,6 +202,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
       - name: Setup Kubeconfig
         run: |
           mkdir -p $HOME/.kube
