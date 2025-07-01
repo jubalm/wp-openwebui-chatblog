@@ -24,7 +24,7 @@ The project uses IONOS Managed Databases (PostgreSQL for Authentik, MariaDB for 
   - **Authentik:** SSO provider.
   - **WordPress:** Custom Docker image including the `wordpress-mcp` and OIDC plugins.
   - **OpenWebUI:** Web UI for LLMs.
-- **CI/CD & Secrets:** GitHub Actions (`.github/workflows`)
+- **CI/CD & Secrets:** GitHub Actions (`.github/workflows`), with a unified `plan -> approve -> apply` workflow.
 - **Key Protocols:** OIDC (SSO), ModelContextProtocol (MCP), OpenAI API.
 
 ## 3. Architecture Summary
@@ -40,7 +40,7 @@ The project uses IONOS Managed Databases (PostgreSQL for Authentik, MariaDB for 
 - **Networking:**
   - Internal communication uses standard Kubernetes services and DNS (e.g., `openwebui` to `wordpress-mcp-service.wordpress-tenant-foo.svc.cluster.local`).
   - External access is provided via IP-based Kubernetes Ingress rules. No custom domains or TLS are in scope for this PoC.
-- **Secrets Management:** Sensitive data (API tokens, database credentials) are stored as GitHub Actions secrets and injected into the cluster as Kubernetes Secrets during the CI/CD workflow.
+- **Secrets Management:** Sensitive data (API tokens, database credentials) are managed securely. Per-tenant WordPress database passwords are now automatically generated using Terraform's `random` provider, ensuring unique and strong credentials for each tenant. Other secrets are stored as GitHub Actions secrets and injected into the cluster as Kubernetes Secrets during the CI/CD workflow.
 
 ## 4. Key Project Goals
 
