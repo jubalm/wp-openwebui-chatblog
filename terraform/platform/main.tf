@@ -54,7 +54,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = local.kubeconfig_decoded.clusters[0].cluster.server
     token                  = local.kubeconfig_decoded.users[0].user.token
     cluster_ca_certificate = base64decode(local.kubeconfig_decoded.clusters[0].cluster["certificate-authority-data"])
