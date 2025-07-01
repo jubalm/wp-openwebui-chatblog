@@ -43,13 +43,21 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
+locals {
+  kubeconfig_decoded = yamldecode(data.terraform_remote_state.infra.outputs.kubeconfig)
+}
+
 provider "kubernetes" {
-  kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
+  host                   = local.kubeconfig_decoded.clusters[0].cluster.server
+  token                  = local.kubeconfig_decoded.users[0].user.token
+  cluster_ca_certificate = base64decode(local.kubeconfig_decoded.clusters[0].cluster["certificate-authority-data"])
 }
 
 provider "helm" {
   kubernetes {
-    kubeconfig = data.terraform_remote_state.infra.outputs.kubeconfig
+    host                   = local.kubeconfig_decoded.clusters[0].cluster.server
+    token                  = local.kubeconfig_decoded.users[0].user.token
+    cluster_ca_certificate = base64decode(local.kubeconfig_decoded.clusters[0].cluster["certificate-authority-data"])
   }
 }
 
