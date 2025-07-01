@@ -39,18 +39,13 @@ provider "ionoscloud" {
 }
 
 provider "kubernetes" {
-  config_path = var.kubeconfig_path
+  config_path = data.terraform_remote_state.platform.outputs.kubeconfig
 }
 
 provider "helm" {
-  kubernetes = {
-    config_path = var.kubeconfig_path
+  kubernetes {
+    config_path = data.terraform_remote_state.platform.outputs.kubeconfig
   }
-}
-
-variable "kubeconfig_path" {
-  type    = string
-  default = "~/.kube/config"
 }
 
 variable "ionos_token" {

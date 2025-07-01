@@ -43,6 +43,16 @@ provider "ionoscloud" {
   token = var.ionos_token
 }
 
+provider "kubernetes" {
+  kubeconfig = data.ionoscloud_k8s_cluster.mks.kube_config
+}
+
+provider "helm" {
+  kubernetes {
+    kubeconfig = data.ionoscloud_k8s_cluster.mks.kube_config
+  }
+}
+
 variable "ionos_token" {
   type = string
 }
