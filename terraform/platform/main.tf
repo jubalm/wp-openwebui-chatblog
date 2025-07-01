@@ -44,12 +44,12 @@ provider "ionoscloud" {
 }
 
 provider "kubernetes" {
-  kubeconfig = data.ionoscloud_k8s_cluster.mks.kube_config
+  config_path = pathexpand("~/.kube/config")
 }
 
 provider "helm" {
   kubernetes {
-    kubeconfig = data.ionoscloud_k8s_cluster.mks.kube_config
+    config_path = pathexpand("~/.kube/config")
   }
 }
 
