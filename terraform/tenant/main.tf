@@ -162,7 +162,7 @@ resource "helm_release" "wordpress" {
     yamlencode({
       fullnameOverride = "wordpress-${each.key}"
       image = {
-        repository = "wp-openwebui.cr.de-fra.ionos.com/wp-openwebui/wordpress"
+        repository = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress"
         tag        = "latest"
       }
       imagePullSecrets = [
