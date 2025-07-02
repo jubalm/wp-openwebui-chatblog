@@ -124,9 +124,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
     cidr          = "10.7.222.0/24"
   }
 
-  lifecycle {
-    ignore_changes = [credentials]
-  }
+  
 }
 
 resource "kubernetes_namespace" "wordpress_tenants" {
