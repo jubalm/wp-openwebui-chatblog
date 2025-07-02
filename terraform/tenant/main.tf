@@ -115,17 +115,7 @@ resource "kubernetes_namespace" "wordpress_tenants" {
   }
 }
 
-resource "kubernetes_secret" "db_credentials" {
-  for_each = var.wordpress_tenants
-  metadata {
-    name      = "wordpress-${each.key}-db-credentials"
-    namespace = kubernetes_namespace.wordpress_tenants[each.key].metadata[0].name
-  }
-  data = {
-    password = base64encode(random_password.db_password[each.key].result)
-  }
-  type = "Opaque"
-}
+
 
 resource "helm_release" "wordpress" {
   for_each          = var.wordpress_tenants
@@ -170,9 +160,7 @@ resource "helm_release" "wordpress" {
     })
   ]
 
-  depends_on = [
-    kubernetes_secret.db_credentials
-  ]
+  
 }
 
 output "wordpress_urls" {
