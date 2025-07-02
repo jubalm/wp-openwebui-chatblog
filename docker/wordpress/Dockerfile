@@ -48,5 +48,6 @@ COPY wp-entrypoint.sh /usr/local/bin/wp-entrypoint.sh
 RUN chmod +x /usr/local/bin/wp-entrypoint.sh
 
 # Use custom entrypoint
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ENTRYPOINT ["/usr/local/bin/wp-entrypoint.sh"]
 CMD ["apache2-foreground"]

@@ -1,0 +1,180 @@
+name: Unified Terraform Deployment
+
+on:
+  push:
+    branches:
+      - main # Or your primary branch
+      - helm-charts
+    paths:
+      - 'terraform/**'
+      - 'charts/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  # ======================================================================================
+  # 1. Infrastructure Module
+  # ======================================================================================
+  plan-infra:
+    name: '1. Plan Infrastructure'
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/infrastructure init
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/infrastructure plan -out=tfplan
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: infra-plan
+          path: terraform/infrastructure/tfplan
+
+  apply-infra:
+    name: '1. Apply Infrastructure'
+    runs-on: ubuntu-latest
+    needs: plan-infra
+    # environment: infrastructure
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: infra-plan
+          path: terraform/infrastructure
+      - name: Terraform Init
+        run: terraform -chdir=terraform/infrastructure init
+      - name: Terraform Apply
+        run: terraform -chdir=terraform/infrastructure apply -auto-approve tfplan
+
+  # ======================================================================================
+  # 2. Platform Module
+  # ======================================================================================
+  plan-platform:
+    name: '2. Plan Platform'
+    runs-on: ubuntu-latest
+    needs: apply-infra
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/platform plan -out=tfplan
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-plan
+          path: terraform/platform/tfplan
+
+  apply-platform:
+    name: '2. Apply Platform'
+    runs-on: ubuntu-latest
+    needs: plan-platform
+    # environment: platform
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: platform-plan
+          path: terraform/platform
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Terraform Apply
+        run: terraform -chdir=terraform/platform apply -auto-approve tfplan
+
+  # ======================================================================================
+  # 3. Tenant Module
+  # ======================================================================================
+  plan-tenant:
+    name: '3. Plan Tenants'
+    runs-on: ubuntu-latest
+    needs: apply-platform
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cr_username: ${{ secrets.CR_USERNAME }}
+      TF_VAR_cr_password: ${{ secrets.CR_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/tenant init
+      - name: Terraform Plan
+        run: terraform -chdir=terraform/tenant plan -out=tfplan
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-plan
+          path: terraform/tenant/tfplan
+
+  apply-tenant:
+    name: '3. Apply Tenants'
+    runs-on: ubuntu-latest
+    needs: plan-tenant
+    # No environment means no manual approval
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cr_username: ${{ secrets.CR_USERNAME }}
+      TF_VAR_cr_password: ${{ secrets.CR_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tenant-plan
+          path: terraform/tenant
+      - name: Terraform Init
+        run: terraform -chdir=terraform/tenant init
+      - name: Terraform Apply
+        run: terraform -chdir=terraform/tenant apply -auto-approve tfplan

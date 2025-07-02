@@ -13,6 +13,10 @@ terraform {
       source  = "ionos-cloud/ionoscloud"
       version = ">= 6.4.10"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.6.0"
+    }
   }
   
   backend "s3" {
@@ -31,70 +35,37 @@ terraform {
   }
 }
 
+
+
+
+
+provider "ionoscloud" {
+  token = var.ionos_token
+}
+
+locals {
+  kubeconfig_decoded = yamldecode(data.terraform_remote_state.infra.outputs.kubeconfig)
+}
+
 provider "kubernetes" {
-  config_path = var.kubeconfig_path
+  host                   = local.kubeconfig_decoded.clusters[0].cluster.server
+  token                  = local.kubeconfig_decoded.users[0].user.token
+  cluster_ca_certificate = base64decode(local.kubeconfig_decoded.clusters[0].cluster["certificate-authority-data"])
 }
 
 provider "helm" {
   kubernetes = {
-    config_path = var.kubeconfig_path
+    host                   = local.kubeconfig_decoded.clusters[0].cluster.server
+    token                  = local.kubeconfig_decoded.users[0].user.token
+    cluster_ca_certificate = base64decode(local.kubeconfig_decoded.clusters[0].cluster["certificate-authority-data"])
   }
-}
-
-variable "kubeconfig_path" {
-  type    = string
-  default = "~/.kube/config"
-}
-
-provider "ionoscloud" {
-  token = var.ionos_token
 }
 
 variable "ionos_token" {
   type = string
 }
 
-variable "cluster_name" {
-  type    = string
-  default = "mks-cluster"
-}
 
-variable "k8s_version" {
-  type    = string
-  default = "1.32.5"
-}
-
-resource "ionoscloud_k8s_cluster" "mks" {
-  name        = var.cluster_name
-  k8s_version = var.k8s_version
-  maintenance_window {
-    day_of_the_week = "Monday"
-    time            = "03:00:00Z"
-  }
-}
-
-data "ionoscloud_k8s_cluster" "mks" {
-  name = ionoscloud_k8s_cluster.mks.name
-}
-
-resource "ionoscloud_k8s_node_pool" "mks_pool" {
-  k8s_cluster_id    = ionoscloud_k8s_cluster.mks.id
-  name              = "mks-node-pool"
-  node_count        = 2
-  cpu_family        = "INTEL_SIERRAFOREST"
-  ram_size          = 4096
-  availability_zone = "AUTO"
-  datacenter_id     = data.terraform_remote_state.infra.outputs.datacenter_id
-  k8s_version       = var.k8s_version
-  cores_count       = 2
-  storage_type      = "SSD"
-  storage_size      = 20
-
-  lans {
-    id   = data.terraform_remote_state.infra.outputs.lan_id
-    dhcp = true
-  }
-}
 
 resource "ionoscloud_pg_cluster" "postgres" {
   display_name         = "postgres-cluster"
@@ -132,13 +103,44 @@ resource "kubernetes_namespace" "admin_apps" {
 resource "helm_release" "authentik" {
   name              = "authentik"
   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-  repository        = "https://charts.goauthentik.io/"
-  chart             = "authentik"
-  version           = "2024.6.0"
-  values            = [file("${path.module}/../../charts/authentik/values.yaml")]
+  chart             = "../../charts/authentik"
   create_namespace  = true
   dependency_update = true
   timeout           = 600
+}
+
+resource "random_password" "authentik_secret_key" {
+  length  = 32
+  special = false
+}
+
+resource "kubernetes_ingress_v1" "authentik_ingress" {
+  metadata {
+    name      = "authentik-ingress"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+    }
+  }
+
+  spec {
+    rule {
+      http {
+        path {
+          path = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "authentik"
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 resource "helm_release" "nginx_ingress" {
@@ -157,10 +159,21 @@ resource "helm_release" "openwebui" {
   repository        = "https://helm.openwebui.com/"
   chart             = "open-webui"
   version           = "6.22.0"
-  values            = [file("${path.module}/../../charts/openwebui/values.yaml")]
   create_namespace  = true
   dependency_update = true
   timeout           = 600
+
+  values = [
+    yamlencode({
+      extraEnvFrom = [
+        {
+          secretRef = {
+            name = kubernetes_secret.openwebui_env.metadata[0].name
+          }
+        }
+      ]
+    })
+  ]
 }
 
 resource "ionoscloud_pg_database" "authentik" {
@@ -169,12 +182,33 @@ resource "ionoscloud_pg_database" "authentik" {
   owner      = "authentikuser"
 }
 
-output "cluster_id" {
-  value = ionoscloud_k8s_cluster.mks.id
+resource "kubernetes_secret" "authentik_env" {
+  metadata {
+    name      = "authentik-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    secret_key        = random_password.authentik_secret_key.result
+    postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
+    postgres_user     = var.pg_username
+    postgres_password = var.pg_password
+    postgres_name     = ionoscloud_pg_database.authentik.name
+  }
 }
 
-output "kubeconfig" {
-  value     = data.ionoscloud_k8s_cluster.mks.kube_config
+resource "kubernetes_secret" "openwebui_env" {
+  metadata {
+    name      = "openwebui-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    OPENAI_API_KEY      = var.openai_api_key
+    OPENAI_API_BASE_URL = "https://api.ionos.com/llm/v1"
+  }
+}
+
+variable "openai_api_key" {
+  type      = string
   sensitive = true
 }
 
@@ -188,13 +222,3 @@ variable "pg_password" {
   default = "authentik_password"
 }
 
-output "postgres_connection" {
-  value = {
-    host     = ionoscloud_pg_cluster.postgres.dns_name
-    port     = 5432
-    username = var.pg_username
-    password = var.pg_password
-    database = "postgres"
-  }
-  sensitive = true
-}

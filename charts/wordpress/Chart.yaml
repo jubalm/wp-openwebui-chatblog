@@ -1,0 +1,6 @@
+apiVersion: v2
+name: wordpress
+description: A Helm chart for deploying a custom WordPress instance for the IONOS MKS PoC.
+type: application
+version: 0.1.0
+appVersion: "6.5"

@@ -33,3 +33,4 @@ terraform.tfvars
 terraform/terraform.tfvars
 terraform/*.tfvars
 charts/**/*.nocommit.yaml
+kubeconfig.yaml

@@ -1,12 +1,26 @@
+secret:
+  create: true
+  name: openwebui-env-secrets
+  openai_api_key: "REPLACE_ME"
+  openai_api_base_url: "https://openai.inference.de-txl.ionos.com/v1"
+
 ollama:
   enabled: false
 
 pipelines:
   enabled: false
 
-envFrom:
-  - secretRef:
-      name: openwebui-env-secrets
+extraEnvVars:
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: "openwebui-env-secrets"
+        key: openai-api-key
+  - name: OPENAI_API_BASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: "openwebui-env-secrets"
+        key: openai-api-base-url
 
 ingress:
   enabled: true
