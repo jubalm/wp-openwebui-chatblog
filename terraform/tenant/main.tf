@@ -156,6 +156,7 @@ resource "helm_release" "wordpress" {
       }
       persistence = {
         enabled = true
+        storageClass = "ionos-enterprise-hdd"
       }
     })
   ]
