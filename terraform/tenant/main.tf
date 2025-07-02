@@ -91,6 +91,12 @@ variable "cr_password" {
   sensitive = true
 }
 
+variable "wordpress_image_tag" {
+  type        = string
+  description = "The Docker image tag for WordPress. Defaults to 'latest' if not provided."
+  default     = "latest"
+}
+
 resource "random_password" "db_password" {
   for_each = var.wordpress_tenants
   length   = 16
@@ -163,7 +169,7 @@ resource "helm_release" "wordpress" {
       fullnameOverride = "wordpress-${each.key}"
       image = {
         repository = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress"
-        tag        = "latest"
+        tag        = var.wordpress_image_tag
       }
       imagePullSecrets = [
         {
