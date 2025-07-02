@@ -94,7 +94,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   mariadb_version = "10.6"
   instances       = 1
   cores           = 2
-  ram             = 2048
+  ram             = 2
   storage_size    = 10
 
   credentials {
