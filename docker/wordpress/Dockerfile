@@ -29,7 +29,7 @@ RUN curl -L -o /tmp/openid-connect-generic.tar.gz $OPENID_CONNECT && \
 FROM wordpress:php8.2-apache
 
 # Install network utilities for debugging
-RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping netcat-traditional && \
+RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping netcat-traditional libedit-dev libncurses5 libtinfo5 && \
   rm -rf /var/lib/apt/lists/*
 
 # Copy prepared plugins from build stage
