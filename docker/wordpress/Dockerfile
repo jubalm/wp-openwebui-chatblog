@@ -3,7 +3,7 @@ FROM php:8.2-cli AS build
 
 # Install necessary tools for building plugins and mysql-client in one step, then clean up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  git curl unzip default-mysql-client && \
+  git curl unzip default-mysql-client libedit2 && \
   rm -rf /var/lib/apt/lists/*
 
 # Ensure the /build/tools directory exists before downloading wp-cli
