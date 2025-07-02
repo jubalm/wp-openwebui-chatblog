@@ -28,6 +28,10 @@ RUN curl -L -o /tmp/openid-connect-generic.tar.gz $OPENID_CONNECT && \
 # Stage 2: Runtime Stage
 FROM wordpress:php8.2-apache
 
+# Install network utilities for debugging
+RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping netcat-traditional && \
+  rm -rf /var/lib/apt/lists/*
+
 # Copy prepared plugins from build stage
 COPY --from=build /build/wordpress-mcp /usr/src/wordpress/wp-content/plugins/wordpress-mcp
 COPY --from=build /build/openid-connect-generic /usr/src/wordpress/wp-content/plugins/openid-connect-generic
@@ -37,6 +41,7 @@ COPY --from=build /usr/bin/mysql* /usr/bin/
 
 # Copy wp-cli from build stage
 COPY --from=build /build/tools/wp /usr/local/bin/wp
+
 
 # Set permissions for wp-cli and plugins directory
 RUN chmod +x /usr/local/bin/wp && \
