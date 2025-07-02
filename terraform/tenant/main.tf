@@ -158,6 +158,19 @@ resource "helm_release" "wordpress" {
         enabled = true
         storageClass = "ionos-enterprise-hdd"
       }
+      serviceAccount = {
+        create = true
+        name   = "wordpress-${each.key}"
+      }
+      service = {
+        port = 80
+      }
+      authentik = {
+        enabled = true
+        url = "http://authentik.admin-apps.svc.cluster.local:9000"
+        clientId = "wordpress-${each.key}"
+        clientSecret = "a-secure-secret" # This should be a secret
+      }
     })
   ]
 
