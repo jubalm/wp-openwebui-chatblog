@@ -90,7 +90,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   instances       = 1
   cores           = 2
   ram             = 4
-  storage_size    = 10
+  storage_size    = 20
 
   credentials {
     username = "wpuser"
