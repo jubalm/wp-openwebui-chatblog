@@ -72,11 +72,6 @@ variable "wordpress_tenants" {
       admin_user     = "tenant1-admin"
       admin_password = "securepassword1"
       admin_email    = "admin@tenant1.com"
-    },
-    "tenant2" = {
-      admin_user     = "tenant2-admin"
-      admin_password = "securepassword2"
-      admin_email    = "admin@tenant2.com"
     }
   }
 }
@@ -94,7 +89,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   mariadb_version = "10.6"
   instances       = 1
   cores           = 2
-  ram             = 2
+  ram             = 4
   storage_size    = 10
 
   credentials {
