@@ -76,6 +76,21 @@ variable "wordpress_tenants" {
   }
 }
 
+variable "cr_server" {
+  type    = string
+  default = "wp-openwebui.cr.de-fra.ionos.com"
+}
+
+variable "cr_username" {
+  type      = string
+  sensitive = true
+}
+
+variable "cr_password" {
+  type      = string
+  sensitive = true
+}
+
 resource "random_password" "db_password" {
   for_each = var.wordpress_tenants
   length   = 16
@@ -115,7 +130,25 @@ resource "kubernetes_namespace" "wordpress_tenants" {
   }
 }
 
+resource "kubernetes_secret" "registry_secret" {
+  for_each = var.wordpress_tenants
+  metadata {
+    name      = "ionos-cr-secret"
+    namespace = kubernetes_namespace.wordpress_tenants[each.key].metadata[0].name
+  }
 
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        "${var.cr_server}" = {
+          auth = base64encode("${var.cr_username}:${var.cr_password}")
+        }
+      }
+    })
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+}
 
 resource "helm_release" "wordpress" {
   for_each          = var.wordpress_tenants
@@ -132,6 +165,11 @@ resource "helm_release" "wordpress" {
         repository = "wp-openwebui.cr.de-fra.ionos.com/wp-openwebui/wordpress"
         tag        = "latest"
       }
+      imagePullSecrets = [
+        {
+          name = "ionos-cr-secret"
+        }
+      ]
       site = {
         url          = "http://wordpress-${each.key}.local"
         title        = "WordPress ${each.key}"
@@ -195,4 +233,4 @@ output "mariadb_connections" {
     }
   }
   sensitive = true
-} 
+}
