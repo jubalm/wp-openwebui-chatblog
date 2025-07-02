@@ -1,1 +1,36 @@
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Node.js
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# Miscellaneous
+*.swp
+*.swo
+
+# Ignore Terraform variable files containing secrets
+terraform.tfvars
+*.tfvars
+terraform/terraform.tfvars
+terraform/*.tfvars
+charts/**/*.nocommit.yaml
 kubeconfig.yaml
