@@ -109,6 +109,7 @@ resource "helm_release" "authentik" {
   create_namespace  = true
   dependency_update = true
   timeout           = 600
+  replace           = true
 
   values = [
     yamlencode({
