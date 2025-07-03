@@ -89,7 +89,9 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
       - name: Remove stuck Authentik from state (ignore errors)
-        run: terraform -chdir=terraform/platform state rm helm_release.authentik || true
+        run: |
+          terraform -chdir=terraform/platform state rm helm_release.authentik || true
+          terraform -chdir=terraform/platform state rm helm_release.authentik_new || true
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
@@ -125,7 +127,9 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
       - name: Remove stuck Authentik from state (ignore errors)
-        run: terraform -chdir=terraform/platform state rm helm_release.authentik || true
+        run: |
+          terraform -chdir=terraform/platform state rm helm_release.authentik || true
+          terraform -chdir=terraform/platform state rm helm_release.authentik_new || true
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
       - name: Export fresh kubeconfig
