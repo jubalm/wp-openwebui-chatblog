@@ -41,4 +41,4 @@ Deployment is fully automated via GitHub Actions.
 
 ## ��� Architecture & Documentation
 
-A detailed technical overview of the architecture, including the Terraform structure, Kubernetes layout, and CI/CD pipelines, can be found in the [**TECHNICAL_OVERVIEW.md**](./TECHNICAL_OVERVIEW.md) document.
+A detailed technical overview of the architecture, including the Terraform structure, Kubernetes layout, and CI/CD pipelines, can be found in the [**TECHNICAL_OVERVIEW.md**](./docs/3.TECHNICAL_OVERVIEW.md) document.

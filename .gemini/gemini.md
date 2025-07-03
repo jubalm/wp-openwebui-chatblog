@@ -85,3 +85,7 @@ To connect to the MKS cluster, you need to use the `kubeconfig` file generated b
     ```bash
     kubectl --kubeconfig=kubeconfig.yaml get pods -n admin-apps
     ```
+
+## 6. Debugging Helm Releases in Terraform
+
+When debugging `helm_release` resources in Terraform that are failing to deploy pods (e.g., due to `ImagePullBackOff`), temporarily set `wait = false` on the `helm_release` resource. This prevents `terraform apply` from hanging for the full timeout, allowing for quicker `kubectl` inspection of the failing pods.
