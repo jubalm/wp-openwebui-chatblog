@@ -86,7 +86,7 @@ resource "ionoscloud_pg_cluster" "postgres" {
   connections {
     datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
     lan_id        = data.terraform_remote_state.infra.outputs.lan_id
-    cidr          = "10.7.0.0/16"
+    cidr          = "10.7.222.100/24"
   }
 
   lifecycle {
