@@ -100,8 +100,8 @@ resource "kubernetes_namespace" "admin_apps" {
   }
 }
 
-resource "helm_release" "authentik" {
-  name              = "authentik"
+resource "helm_release" "authentik_new" {
+  name              = "authentik-new"
   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
   repository        = "https://charts.goauthentik.io"
   chart             = "authentik"
@@ -109,7 +109,6 @@ resource "helm_release" "authentik" {
   create_namespace  = true
   dependency_update = true
   timeout           = 600
-  replace           = true
 
   values = [
     yamlencode({
@@ -157,7 +156,7 @@ resource "kubernetes_ingress_v1" "authentik_ingress" {
           path_type = "Prefix"
           backend {
             service {
-              name = "authentik"
+              name = "authentik-new"
               port {
                 number = 80
               }
