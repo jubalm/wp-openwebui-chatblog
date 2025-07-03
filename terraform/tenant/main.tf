@@ -121,7 +121,7 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   connections {
     datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
     lan_id        = data.terraform_remote_state.infra.outputs.lan_id
-    cidr          = "10.0.0.0/8"
+    cidr          = "10.7.0.0/16"
   }
 
   
