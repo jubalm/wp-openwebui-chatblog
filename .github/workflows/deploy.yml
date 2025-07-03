@@ -89,7 +89,7 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
       - name: Terraform Plan
-        run: terraform -chdir=terraform/platform plan -out=tfplan
+        run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
