@@ -189,6 +189,7 @@ resource "helm_release" "wordpress" {
       }
       ingress = {
         enabled = true
+        className = "nginx"
         hosts = [
           {
             host  = "wordpress-${each.key}.local"
