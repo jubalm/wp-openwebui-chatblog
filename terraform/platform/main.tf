@@ -100,73 +100,74 @@ resource "kubernetes_namespace" "admin_apps" {
   }
 }
 
-resource "helm_release" "authentik_new" {
-  name              = "authentik-new"
-  namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-  repository        = "https://charts.goauthentik.io"
-  chart             = "authentik"
-  version           = "2023.10.7"
-  create_namespace  = true
-  dependency_update = true
-  timeout           = 600
-
-  values = [
-    yamlencode({
-      authentik = {
-        secret_key = random_password.authentik_secret_key.result
-        postgresql = {
-          enabled = false
-          host    = ionoscloud_pg_cluster.postgres.dns_name
-          name    = ionoscloud_pg_database.authentik.name
-          user    = var.pg_username
-          password = var.pg_password
-        }
-      }
-      redis = {
-        enabled = true
-      }
-      server = {
-        ingress = {
-          enabled = false
-        }
-      }
-    })
-  ]
-}
+# Authentik temporarily disabled to unblock deployment
+# resource "helm_release" "authentik_new" {
+#   name              = "authentik-new"
+#   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
+#   repository        = "https://charts.goauthentik.io"
+#   chart             = "authentik"
+#   version           = "2023.10.7"
+#   create_namespace  = true
+#   dependency_update = true
+#   timeout           = 600
+#
+#   values = [
+#     yamlencode({
+#       authentik = {
+#         secret_key = random_password.authentik_secret_key.result
+#         postgresql = {
+#           enabled = false
+#           host    = ionoscloud_pg_cluster.postgres.dns_name
+#           name    = ionoscloud_pg_database.authentik.name
+#           user    = var.pg_username
+#           password = var.pg_password
+#         }
+#       }
+#       redis = {
+#         enabled = true
+#       }
+#       server = {
+#         ingress = {
+#           enabled = false
+#         }
+#       }
+#     })
+#   ]
+# }
 
 resource "random_password" "authentik_secret_key" {
   length  = 32
   special = false
 }
 
-resource "kubernetes_ingress_v1" "authentik_ingress" {
-  metadata {
-    name      = "authentik-ingress"
-    namespace = kubernetes_namespace.admin_apps.metadata[0].name
-    annotations = {
-      "kubernetes.io/ingress.class" = "nginx"
-    }
-  }
-
-  spec {
-    rule {
-      http {
-        path {
-          path = "/"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "authentik-new"
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+# resource "kubernetes_ingress_v1" "authentik_ingress" {
+#   metadata {
+#     name      = "authentik-ingress"
+#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
+#     annotations = {
+#       "kubernetes.io/ingress.class" = "nginx"
+#     }
+#   }
+#
+#   spec {
+#     rule {
+#       http {
+#         path {
+#           path = "/"
+#           path_type = "Prefix"
+#           backend {
+#             service {
+#               name = "authentik-new"
+#               port {
+#                 number = 80
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
 
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
