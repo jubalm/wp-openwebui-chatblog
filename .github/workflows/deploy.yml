@@ -88,6 +88,8 @@ jobs:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
+      - name: Remove stuck Authentik from state (ignore errors)
+        run: terraform -chdir=terraform/platform state rm helm_release.authentik || true
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
@@ -122,6 +124,8 @@ jobs:
           path: terraform/platform
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
+      - name: Remove stuck Authentik from state (ignore errors)
+        run: terraform -chdir=terraform/platform state rm helm_release.authentik || true
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
 
