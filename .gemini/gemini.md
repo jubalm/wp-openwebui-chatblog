@@ -11,7 +11,9 @@ This is a Proof of Concept (PoC) project to deploy and integrate a multi-tenant 
 
 The project uses IONOS Managed Databases (PostgreSQL for Authentik, MariaDB for each WordPress tenant) and Terraform for infrastructure provisioning. A key feature is the **ModelContextProtocol (MCP)**, a custom integration enabling OpenWebUI to communicate with the WordPress instances to draft blog posts.
 
-## 2. Core Technologies
+## 2. Project Structure
+
+### 2.1 Core Technologies
 
 - **Cloud Platform:** IONOS Cloud
   - IONOS Managed Kubernetes (MKS) in `de/txl`
@@ -27,7 +29,20 @@ The project uses IONOS Managed Databases (PostgreSQL for Authentik, MariaDB for 
 - **CI/CD & Secrets:** GitHub Actions (`.github/workflows`), with a unified `plan -> approve -> apply` workflow.
 - **Key Protocols:** OIDC (SSO), ModelContextProtocol (MCP), OpenAI API.
 
-## 3. Architecture Summary
+### 2.2 Application Deployment (Helm Charts)
+
+The `/charts` directory contains Helm charts for deploying the applications:
+- `charts/authentik`: Helm chart for Authentik.
+- `charts/openwebui`: Helm chart for OpenWebUI.
+- `charts/wordpress`: Helm chart for WordPress, used for deploying multiple tenant instances.
+
+### 2.3 Custom WordPress Docker Image
+
+The `/docker/wordpress` directory contains the Dockerfile and associated scripts for building the custom WordPress Docker image. This image includes:
+- The `wordpress-mcp` plugin for ModelContextProtocol integration.
+- The OIDC plugin for Single Sign-On with Authentik.
+
+### 2.4 Architecture Summary
 
 - **Infrastructure:** All IONOS cloud resources (MKS cluster, node pools, databases) are defined and managed by Terraform scripts located in the `/terraform` directory. The Terraform state is stored in IONOS Object Storage.
 - **Kubernetes Layout:**
