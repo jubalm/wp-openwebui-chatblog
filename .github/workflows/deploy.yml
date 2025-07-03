@@ -128,6 +128,13 @@ jobs:
         run: terraform -chdir=terraform/platform state rm helm_release.authentik || true
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
+      - name: Export fresh kubeconfig
+        run: terraform -chdir=terraform/infrastructure output -raw kubeconfig > kubeconfig-fresh.yaml
+      - name: Upload kubeconfig
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubeconfig-fresh
+          path: kubeconfig-fresh.yaml
 
   # ======================================================================================
   # 3. Tenant Module
