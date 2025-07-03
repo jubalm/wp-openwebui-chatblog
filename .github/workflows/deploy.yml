@@ -133,7 +133,9 @@ jobs:
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
       - name: Export fresh kubeconfig
-        run: terraform -chdir=terraform/infrastructure output -raw kubeconfig > kubeconfig-fresh.yaml
+        run: |
+          terraform -chdir=terraform/infrastructure init
+          terraform -chdir=terraform/infrastructure output -raw kubeconfig > kubeconfig-fresh.yaml
       - name: Upload kubeconfig
         uses: actions/upload-artifact@v4
         with:
