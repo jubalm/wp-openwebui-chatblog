@@ -13,6 +13,7 @@ A series of issues caused the `helm_release.authentik` resource to fail during t
 - **Solution:** The configuration was updated to use the project's local, customized Helm chart located at `charts/authentik`. This local chart is specifically designed to correctly map the keys from the Terraform-generated secret to the environment variables the Authentik application requires.
 
 **Before (Incorrect):**
+
 ```terraform
 resource "helm_release" "authentik" {
   name              = "authentik"
@@ -24,6 +25,7 @@ resource "helm_release" "authentik" {
 ```
 
 **After (Correct):**
+
 ```terraform
 resource "helm_release" "authentik" {
   name              = "authentik"
@@ -45,7 +47,14 @@ resource "helm_release" "authentik" {
 - **Root Cause:** A failed `helm` operation can leave an orphaned release in the cluster. When Terraform tried to apply the configuration again, Helm refused to create a new release with the same name.
 - **Solution:** The stale releases were manually removed from the cluster before re-running the deployment workflow.
 
+### 4. Problem: Helm Lint Error
+
+- **Symptom:** A persisting lint error on helm provider definition on terraform breaks the deployment when lint fixed.
+- **Root Cause:** The deployment and official documentation otherwise contradicts the lint error so it may be an updated (or outdated) VSCode extension reporting incorrectly.
+- **Solution:** Ignore Terraform Error as this may be a bug [Helm Provider Docs](https://registry.terraform.io/providers/hashicorp/helm/latest/docs)
+
 **Cleanup Commands:**
+
 ```bash
 # Ensure KUBECONFIG is set correctly
 helm uninstall authentik -n admin-apps
