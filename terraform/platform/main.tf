@@ -334,6 +334,7 @@ resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
 
   spec {
     access_modes = ["ReadWriteOnce"]
+    storage_class_name = "ionos-enterprise-hdd"
     resources {
       requests = {
         storage = "1Gi"
