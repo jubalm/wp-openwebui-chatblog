@@ -119,9 +119,7 @@ resource "helm_release" "authentik" {
           host    = ionoscloud_pg_cluster.postgres.dns_name
           name    = ionoscloud_pg_database.authentik.name
           user    = var.pg_username
-          password = {
-            value = var.pg_password
-          }
+          password = var.pg_password
         }
       }
       redis = {
@@ -262,7 +260,7 @@ resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
       spec {
         container {
           name  = "wordpress-oauth-pipeline"
-          image = "wordpress-oauth-pipeline:latest"
+          image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
           port {
             container_port = 9099
           }

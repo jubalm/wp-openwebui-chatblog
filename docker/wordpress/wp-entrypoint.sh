@@ -53,6 +53,14 @@ echo "Starting WordPress with custom entrypoint..."
             echo "openid-connect-generic plugin not found or already active"
         fi
         
+        # Activate wordpress-openwebui-connector plugin
+        if wp --allow-root --path="/var/www/html" plugin list --name=wordpress-openwebui-connector --status=inactive 2>/dev/null | grep -q wordpress-openwebui-connector; then
+            wp --allow-root --path="/var/www/html" plugin activate wordpress-openwebui-connector
+            echo "wordpress-openwebui-connector plugin activated!"
+        else
+            echo "wordpress-openwebui-connector plugin not found or already active"
+        fi
+        
         echo "All plugins processed!"
         
         # Configure OpenID Connect plugin if Authentik is enabled

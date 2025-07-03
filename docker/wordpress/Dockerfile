@@ -25,6 +25,9 @@ RUN curl -L -o /tmp/openid-connect-generic.tar.gz $OPENID_CONNECT && \
   mkdir -p /build/openid-connect-generic && \
   tar -xzf /tmp/openid-connect-generic.tar.gz --strip-components=1 -C /build/openid-connect-generic
 
+# Copy WordPress-OpenWebUI Connector plugin from local source
+COPY plugins/wordpress-openwebui-connector /build/wordpress-openwebui-connector
+
 # Stage 2: Runtime Stage
 FROM wordpress:php8.2-apache
 
@@ -35,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping ne
 # Copy prepared plugins from build stage
 COPY --from=build /build/wordpress-mcp /usr/src/wordpress/wp-content/plugins/wordpress-mcp
 COPY --from=build /build/openid-connect-generic /usr/src/wordpress/wp-content/plugins/openid-connect-generic
+COPY --from=build /build/wordpress-openwebui-connector /usr/src/wordpress/wp-content/plugins/wordpress-openwebui-connector
 
 # Copy mysql-client binaries from build stage
 COPY --from=build /usr/bin/mysql* /usr/bin/
