@@ -1,0 +1,295 @@
+/* WordPress OpenWebUI Connector Admin Styles */
+
+.wp-openwebui-connector-admin {
+    max-width: 1200px;
+}
+
+.wp-openwebui-connector-admin .postbox {
+    margin-bottom: 20px;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wp-openwebui-connector-admin .postbox h3.hndle {
+    background: #f1f1f1;
+    border-bottom: 1px solid #c3c4c7;
+    padding: 12px 20px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wp-openwebui-connector-admin .postbox .inside {
+    padding: 20px;
+}
+
+/* Status Indicator */
+.wp-openwebui-status-indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.connected {
+    background-color: #46b450;
+}
+
+.status-dot.disconnected {
+    background-color: #dc3232;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Connection Details */
+.connection-details, .connection-setup {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-top: 15px;
+    border-left: 4px solid #0073aa;
+}
+
+.connection-details p {
+    margin: 0 0 15px 0;
+}
+
+.connection-actions {
+    margin-top: 15px;
+}
+
+.connection-actions .button {
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+/* Application Password Setup */
+.application-password-setup {
+    max-width: 800px;
+}
+
+.application-password-setup h4 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    color: #1d2327;
+    font-size: 16px;
+}
+
+.application-password-setup h4:first-child {
+    margin-top: 0;
+}
+
+.application-password-setup ol {
+    margin-left: 20px;
+    line-height: 1.6;
+}
+
+.application-password-setup ol li {
+    margin-bottom: 8px;
+}
+
+.application-password-form {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e1e3e6;
+}
+
+.application-password-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.application-password-form input[type="password"],
+.application-password-form input[type="text"] {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-family: consolas, monaco, monospace;
+    font-size: 14px;
+}
+
+.application-password-form input:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+/* Setup Instructions */
+.setup-instructions {
+    max-width: 800px;
+}
+
+.instruction-steps .step {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #0073aa;
+}
+
+.instruction-steps .step h5 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #0073aa;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.instruction-steps .step p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+/* Debug Information */
+#debug-info {
+    font-family: consolas, monaco, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 15px;
+    width: 100%;
+    height: 300px;
+    resize: vertical;
+    cursor: text;
+}
+
+#debug-info:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+/* Notices */
+.wp-openwebui-notice {
+    margin: 0 0 20px 0;
+    padding: 12px;
+    border-left: 4px solid;
+    border-radius: 0 4px 4px 0;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wp-openwebui-notice.notice-success {
+    border-left-color: #46b450;
+    background: #f0f8ff;
+}
+
+.wp-openwebui-notice.notice-error {
+    border-left-color: #dc3232;
+    background: #fef7f7;
+}
+
+.wp-openwebui-notice.notice-info {
+    border-left-color: #0073aa;
+    background: #f0f8ff;
+}
+
+.wp-openwebui-notice p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 782px) {
+    .wp-openwebui-connector-admin .postbox .inside {
+        padding: 15px;
+    }
+    
+    .connection-details, .connection-setup {
+        padding: 15px;
+    }
+    
+    .application-password-form {
+        padding: 15px;
+    }
+    
+    .application-password-form input[type="password"],
+    .application-password-form input[type="text"] {
+        max-width: none;
+    }
+    
+    .connection-actions .button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+}
+
+/* Button States */
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button.loading {
+    position: relative;
+}
+
+.button.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form Enhancements */
+.form-table th {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.form-table td {
+    padding-top: 10px;
+    padding-bottom: 15px;
+}
+
+.form-table input[type="url"],
+.form-table input[type="text"],
+.form-table input[type="password"] {
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.form-table .description {
+    margin-top: 8px;
+    font-style: italic;
+    color: #646970;
+}

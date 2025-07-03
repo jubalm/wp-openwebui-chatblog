@@ -25,6 +25,7 @@ __pycache__/
 
 # Claude settings
 .claude/settings.local.json
+CLAUDE.local.md
 
 # Miscellaneous
 *.swp
