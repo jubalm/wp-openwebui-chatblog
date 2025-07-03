@@ -67,32 +67,33 @@ variable "ionos_token" {
 
 
 
-resource "ionoscloud_pg_cluster" "postgres" {
-  display_name         = "postgres-cluster"
-  location             = "de/txl"
-  postgres_version     = "14"
-  instances            = 1
-  cores                = 4
-  ram                  = 4096
-  storage_size         = 10240
-  storage_type         = "SSD"
-  synchronization_mode = "ASYNCHRONOUS"
-
-  credentials {
-    username = "authentikuser"
-    password = "authentik_password"
-  }
-
-  connections {
-    datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
-    lan_id        = data.terraform_remote_state.infra.outputs.lan_id
-    cidr          = "10.7.222.100/24"
-  }
-
-  lifecycle {
-    ignore_changes = [credentials]
-  }
-}
+# PostgreSQL cluster temporarily disabled
+# resource "ionoscloud_pg_cluster" "postgres" {
+#   display_name         = "postgres-cluster"
+#   location             = "de/txl"
+#   postgres_version     = "14"
+#   instances            = 1
+#   cores                = 4
+#   ram                  = 4096
+#   storage_size         = 10240
+#   storage_type         = "SSD"
+#   synchronization_mode = "ASYNCHRONOUS"
+#
+#   credentials {
+#     username = "authentikuser"
+#     password = "authentik_password"
+#   }
+#
+#   connections {
+#     datacenter_id = data.terraform_remote_state.infra.outputs.datacenter_id
+#     lan_id        = data.terraform_remote_state.infra.outputs.lan_id
+#     cidr          = "10.7.222.100/24"
+#   }
+#
+#   lifecycle {
+#     ignore_changes = [credentials]
+#   }
+# }
 
 resource "kubernetes_namespace" "admin_apps" {
   metadata {
@@ -100,74 +101,12 @@ resource "kubernetes_namespace" "admin_apps" {
   }
 }
 
-# Authentik temporarily disabled to unblock deployment
-# resource "helm_release" "authentik_new" {
-#   name              = "authentik-new"
-#   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-#   repository        = "https://charts.goauthentik.io"
-#   chart             = "authentik"
-#   version           = "2023.10.7"
-#   create_namespace  = true
-#   dependency_update = true
-#   timeout           = 600
-#
-#   values = [
-#     yamlencode({
-#       authentik = {
-#         secret_key = random_password.authentik_secret_key.result
-#         postgresql = {
-#           enabled = false
-#           host    = ionoscloud_pg_cluster.postgres.dns_name
-#           name    = ionoscloud_pg_database.authentik.name
-#           user    = var.pg_username
-#           password = var.pg_password
-#         }
-#       }
-#       redis = {
-#         enabled = true
-#       }
-#       server = {
-#         ingress = {
-#           enabled = false
-#         }
-#       }
-#     })
-#   ]
+
+# resource "random_password" "authentik_secret_key" {
+#   length  = 32
+#   special = false
 # }
 
-resource "random_password" "authentik_secret_key" {
-  length  = 32
-  special = false
-}
-
-# resource "kubernetes_ingress_v1" "authentik_ingress" {
-#   metadata {
-#     name      = "authentik-ingress"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#     annotations = {
-#       "kubernetes.io/ingress.class" = "nginx"
-#     }
-#   }
-#
-#   spec {
-#     rule {
-#       http {
-#         path {
-#           path = "/"
-#           path_type = "Prefix"
-#           backend {
-#             service {
-#               name = "authentik-new"
-#               port {
-#                 number = 80
-#               }
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
 
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
@@ -202,25 +141,25 @@ resource "helm_release" "openwebui" {
   ]
 }
 
-resource "ionoscloud_pg_database" "authentik" {
-  cluster_id = ionoscloud_pg_cluster.postgres.id
-  name       = "authentik"
-  owner      = "authentikuser"
-}
+# resource "ionoscloud_pg_database" "authentik" {
+#   cluster_id = ionoscloud_pg_cluster.postgres.id
+#   name       = "authentik"
+#   owner      = "authentikuser"
+# }
 
-resource "kubernetes_secret" "authentik_env" {
-  metadata {
-    name      = "authentik-env-secrets"
-    namespace = kubernetes_namespace.admin_apps.metadata[0].name
-  }
-  data = {
-    secret_key        = random_password.authentik_secret_key.result
-    postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
-    postgres_user     = var.pg_username
-    postgres_password = var.pg_password
-    postgres_name     = ionoscloud_pg_database.authentik.name
-  }
-}
+# resource "kubernetes_secret" "authentik_env" {
+#   metadata {
+#     name      = "authentik-env-secrets"
+#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
+#   }
+#   data = {
+#     secret_key        = random_password.authentik_secret_key.result
+#     postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
+#     postgres_user     = var.pg_username
+#     postgres_password = var.pg_password
+#     postgres_name     = ionoscloud_pg_database.authentik.name
+#   }
+# }
 
 resource "kubernetes_secret" "openwebui_env" {
   metadata {
