@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an IONOS Cloud-based Platform-as-a-Service (PaaS) project that deploys a multi-tenant WordPress environment with AI content generation capabilities via OpenWebUI, using centralized SSO through Authentik. The entire infrastructure is managed with Terraform and automated through GitHub Actions.
+This is an IONOS Cloud-based Platform-as-a-Service (PaaS) project designed to deploy a multi-tenant WordPress environment with AI content generation capabilities via OpenWebUI, using centralized SSO through Authentik. The entire infrastructure is managed with Terraform and automated through GitHub Actions.
+
+**Note**: For current deployment status and active issues, see `CLAUDE.local.md`.
 
 ## Key Commands
 
@@ -37,9 +39,13 @@ When working with Terraform in this project:
 
 ### Kubernetes Access
 
-A kubeconfig file is maintained at the project root: `kubeconfig.yaml`
+**Primary Method**: Use `ionosctl` to get current kubeconfig:
+```bash
+# Get current kubeconfig (replace with actual cluster ID)
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
+```
 
-To use this kubeconfig:
+**Alternative**: If kubeconfig file exists at project root:
 ```bash
 export KUBECONFIG=./kubeconfig.yaml
 kubectl get nodes
@@ -109,7 +115,29 @@ Manual deployment follows this sequence:
 The project includes a custom WordPress Docker image with:
 - WordPress MCP plugin v0.2.2
 - OpenID Connect Generic Client (for SSO)
-- Custom integration plugin for OpenWebUI setup (in development)
+- **WordPress-OpenWebUI Connector Plugin** (auto-installed at `docker/wordpress/plugins/wordpress-openwebui-connector/`)
+
+### WordPress-OpenWebUI Integration Design
+
+**Intended Architecture**:
+- **Pipeline Service**: FastAPI microservice (`pipelines/`) handling OAuth2 flows and encrypted credential storage
+- **WordPress Plugin**: Complete admin interface with OAuth2 client (auto-installed in WordPress containers)
+- **Security**: AES-256 encrypted Application Password storage, server-to-server OAuth2 via Authentik
+
+**Key Implementation Files**:
+- `pipelines/wordpress_oauth.py` - OAuth2 server and API endpoints
+- `pipelines/wordpress_client.py` - WordPress REST API client
+- `docker/wordpress/plugins/wordpress-openwebui-connector/` - WordPress plugin
+- `.github/workflows/build-and-push-wordpress.yml` - Builds both WordPress and Pipeline images
+- `terraform/platform/main.tf` - Pipeline service Kubernetes resources
+
+**Intended Usage Flow**: 
+1. WordPress admin configures OAuth2 settings in Settings → OpenWebUI Connector
+2. OAuth2 flow connects WordPress to OpenWebUI via Authentik SSO
+3. Application Password securely stored and used for WordPress API calls
+4. OpenWebUI can create/update WordPress posts via secure API
+
+**Note**: For current integration status, see `CLAUDE.local.md`.
 
 ### Secret Management
 
@@ -133,3 +161,62 @@ All sensitive data is managed through:
 - IONOS region: `de/txl`
 - No testing framework or linting tools are currently configured
 - Focus on minimal viable configurations for PoC deployment
+
+## Troubleshooting Knowledge Base
+
+### Database Connection Issues
+
+**Problem**: WordPress shows "Database not ready, waiting..." continuously
+**Root Cause**: Password mismatch between Terraform-generated MariaDB credentials and Kubernetes secrets
+
+**Diagnosis Steps**:
+1. Test network connectivity: `kubectl exec <pod> -- ping <mariadb-host>`
+2. Test port connectivity: `kubectl exec <pod> -- curl -v telnet://<mariadb-host>:3306`
+3. Check if MariaDB handshake is received (indicates network is OK)
+4. Verify password in Kubernetes secret: `kubectl get secret <secret-name> -o yaml`
+
+**Solution**:
+- Generate new password: `openssl rand -base64 16`
+- Update Kubernetes secret: `kubectl patch secret <secret-name> -p '{"data":{"password":"<base64-encoded-password>"}}'`
+- Recreate MariaDB cluster with new password (IONOS clusters are immutable for credentials)
+- Update WordPress deployment to use new database host
+
+**Key Insights**:
+- IONOS MariaDB clusters don't expose passwords via `ionosctl`
+- Cannot update passwords on existing clusters - must recreate
+- Always ensure password synchronization between Terraform and Helm layers
+- WordPress database wait messages are generic - test connectivity separately
+
+### IONOS MariaDB Cluster Management
+
+**Cluster Creation Time**: 5-10 minutes (shows `CREATING` state)
+**Password Management**: Immutable - cannot change after creation
+**Network Access**: Use CIDR ranges like `10.7.222.100/24`, not `0.0.0.0/0`
+**CLI Commands**:
+- List clusters: `ionosctl dbaas mariadb cluster list`
+- Get cluster details: `ionosctl dbaas mariadb cluster get --cluster-id <id>`
+- Create cluster: `ionosctl dbaas mariadb cluster create --name <name> --user <user> --password <password> --datacenter-id <dc-id> --lan-id <lan-id> --cidr <cidr>`
+
+### Kubernetes Secret Management
+
+**Update existing secret**: `kubectl patch secret <name> -p '{"data":{"key":"<base64-value>"}}' --type='merge'`
+**Base64 encoding**: `echo -n "password" | base64`
+**Base64 decoding**: `echo "encoded" | base64 -d`
+
+**Important**: Pods need restart to pick up secret changes unless they're watching for updates.
+
+### WordPress Container Debugging
+
+**Available tools in WordPress containers**:
+- `ping` - network connectivity
+- `curl` - HTTP/TCP connectivity testing
+- `mysql` - if MySQL client is installed
+
+**Missing tools**:
+- `nslookup` - use `ping` instead for DNS resolution
+- Advanced network tools - use `curl` for port testing
+
+**Log patterns**:
+- `Database not ready, waiting...` - Generic database connectivity issue
+- `ERROR 1045 (28000): Access denied` - Authentication failure
+- `Can't connect to MySQL server` - Network connectivity issue
