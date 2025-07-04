@@ -4,7 +4,7 @@ redis:
 authentik:
   secret:
     create: false
-    name: authentik-env-secrets
+    name: authentik
   postgresql:
     host: ''
     port: 5432
@@ -16,57 +16,7 @@ authentik:
         key: postgres_password
 
 server:
-  extraEnvs:
-    - name: AUTHENTIK_SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: secret_key
-    - name: AUTHENTIK_POSTGRESQL__PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_password
-    - name: AUTHENTIK_POSTGRESQL__HOST
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_host
-    - name: AUTHENTIK_POSTGRESQL__USER
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_user
-    - name: AUTHENTIK_POSTGRESQL__NAME
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_name
+  extraEnvs: []
 
 worker:
-  extraEnvs:
-    - name: AUTHENTIK_SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: secret_key
-    - name: AUTHENTIK_POSTGRESQL__PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_password
-    - name: AUTHENTIK_POSTGRESQL__HOST
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_host
-    - name: AUTHENTIK_POSTGRESQL__USER
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_user
-    - name: AUTHENTIK_POSTGRESQL__NAME
-      valueFrom:
-        secretKeyRef:
-          name: "authentik-env-secrets"
-          key: postgres_name
+  extraEnvs: []

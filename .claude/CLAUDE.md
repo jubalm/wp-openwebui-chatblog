@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an IONOS Cloud-based Platform-as-a-Service (PaaS) project designed to deploy a multi-tenant WordPress environment with AI content generation capabilities via OpenWebUI, using centralized SSO through Authentik. The entire infrastructure is managed with Terraform and automated through GitHub Actions.
 
-**Note**: For current deployment status and active issues, see `CLAUDE.local.md`.
+**Note**: For current deployment status and active issues, see `CLAUDE.md`.
 
 ## Key Commands
 
@@ -137,7 +137,7 @@ The project includes a custom WordPress Docker image with:
 3. Application Password securely stored and used for WordPress API calls
 4. OpenWebUI can create/update WordPress posts via secure API
 
-**Note**: For current integration status, see `CLAUDE.local.md`.
+**Note**: For current integration status, see `CLAUDE.md`.
 
 ### Secret Management
 
@@ -161,6 +161,15 @@ All sensitive data is managed through:
 - IONOS region: `de/txl`
 - No testing framework or linting tools are currently configured
 - Focus on minimal viable configurations for PoC deployment
+
+### Deployment Patterns Learned
+
+- **Authentik requires PostgreSQL**: Cannot use Redis alone - needs PostgreSQL cluster
+- **For PoC without SSO**: Scale Authentik deployments to 0 replicas to avoid restart loops
+- **WordPress database**: Often works better than initial diagnostics suggest
+- **Ingress configuration**: May already be working even when not obvious
+- **System stability**: IONOS infrastructure layer is very reliable
+- **Documentation vs Reality**: Always verify actual service status before assuming failures
 
 ## Troubleshooting Knowledge Base
 
@@ -220,3 +229,24 @@ All sensitive data is managed through:
 - `Database not ready, waiting...` - Generic database connectivity issue
 - `ERROR 1045 (28000): Access denied` - Authentication failure
 - `Can't connect to MySQL server` - Network connectivity issue
+
+### Authentik Deployment Issues
+
+**Problem**: Authentik server in restart loop with PostgreSQL connection errors
+**Root Cause**: Authentik expects PostgreSQL but only Redis is available
+
+**Diagnosis Steps**:
+1. Check deployment status: `kubectl get deployment -n admin-apps | grep authentik`
+2. Check logs: `kubectl logs -n admin-apps [authentik-server-pod] --tail=20`
+3. Look for: `PostgreSQL connection failed, retrying...`
+
+**Solutions**:
+- **For PoC without SSO**: Scale to 0 replicas: `kubectl scale deployment authentik-server -n admin-apps --replicas=0`
+- **For full SSO**: Deploy PostgreSQL cluster in Terraform infrastructure layer
+- **Configuration check**: Verify `AUTHENTIK_POSTGRESQL__ENABLED` environment variable
+
+**Key Insights**:
+- Authentik cannot run with Redis alone - requires PostgreSQL for metadata
+- Setting `AUTHENTIK_POSTGRESQL__ENABLED=false` doesn't switch to Redis-only mode
+- Scaling to 0 replicas is safer than deleting deployments for temporary PoC
+- Worker can also be scaled down: `kubectl scale deployment authentik-worker -n admin-apps --replicas=0`
