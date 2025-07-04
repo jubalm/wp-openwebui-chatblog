@@ -143,7 +143,9 @@ resource "helm_release" "openwebui" {
 resource "helm_release" "authentik" {
   name              = "authentik"
   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-  chart             = "../charts/authentik"
+  repository        = "https://charts.goauthentik.io"
+  chart             = "authentik"
+  version           = "2024.10.5"
   create_namespace  = false
   dependency_update = true
   timeout           = 600
@@ -157,12 +159,27 @@ resource "helm_release" "authentik" {
   values = [
     yamlencode({
       authentik = {
+        secret_key = random_password.authentik_secret_key.result
         postgresql = {
-          host = ionoscloud_pg_cluster.postgres.dns_name
-          port = 5432
-          name = ionoscloud_pg_database.authentik.name
-          user = var.pg_username
+          host     = ionoscloud_pg_cluster.postgres.dns_name
+          port     = 5432
+          name     = ionoscloud_pg_database.authentik.name
+          user     = var.pg_username
+          password = var.pg_password
         }
+        env_from = [
+          {
+            secretRef = {
+              name = kubernetes_secret.authentik_env.metadata[0].name
+            }
+          }
+        ]
+      }
+      postgresql = {
+        enabled = false
+      }
+      redis = {
+        enabled = true
       }
     })
   ]
