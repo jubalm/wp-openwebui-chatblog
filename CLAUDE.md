@@ -78,3 +78,40 @@ kubectl --kubeconfig=./kubeconfig.yaml scale deployment authentik-worker -n admi
 **Future Integration**: Re-enable Authentik SSO and OAuth2 pipeline when PostgreSQL cluster is deployed.
 
 **Troubleshooting**: See `.claude/CLAUDE.md` for detailed troubleshooting patterns and architectural knowledge.
+
+## Claude Code Development Guidelines
+
+### Priority Integration Tasks
+1. **PostgreSQL Deployment**: Add IONOS PostgreSQL cluster for Authentik
+2. **Authentik SSO**: Scale from 0 to enable authentication
+3. **OAuth2 Integration**: Enable WordPress ↔ OpenWebUI communication  
+4. **Content Pipeline**: Activate WordPress MCP plugin integration
+5. **GitHub Workflow**: Complete end-to-end deployment validation
+
+### Quick Development Commands
+```bash
+# Environment setup
+ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+export KUBECONFIG=./kubeconfig.yaml
+
+# Integration health check
+kubectl get pods -A | grep -E "(authentik|wordpress|openwebui)"
+
+# Test WordPress-OpenWebUI connectivity
+curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/
+curl -H "Host: openwebui.local" http://85.215.220.121/api/config
+
+# Check PostgreSQL status (required for Authentik)
+kubectl get postgresql -n admin-apps || echo "PostgreSQL deployment needed"
+
+# GitHub Actions validation
+gh workflow run deploy.yml --ref main
+```
+
+### Critical Implementation Files
+- `terraform/infrastructure/` - PostgreSQL cluster deployment
+- `terraform/platform/` - Authentik configuration updates
+- `charts/authentik/` - SSO service deployment
+- `docker/wordpress/` - MCP plugin activation
+- `pipelines/` - OAuth2 service enablement
+- `.github/workflows/` - CI/CD automation completion

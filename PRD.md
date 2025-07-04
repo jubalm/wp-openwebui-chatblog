@@ -1,0 +1,532 @@
+# Product Requirements Document: WordPress-OpenWebUI Platform Integration
+
+## 1. Executive Summary
+
+### Product Vision
+Create a fully integrated, production-ready multi-tenant platform where WordPress and OpenWebUI communicate seamlessly through secure SSO authentication, with end-to-end automated deployment via GitHub Actions.
+
+### Problem Statement
+Currently, the platform operates as a functional PoC with three critical gaps:
+1. **WordPress-OpenWebUI Disconnected**: Services run independently without content integration
+2. **SSO Missing**: Authentik is disabled, preventing unified authentication across services
+3. **Deployment Workflow Incomplete**: GitHub Actions may not handle full end-to-end deployment validation
+
+### Solution Overview
+Implement a complete integration pipeline enabling:
+- AI content generation in OpenWebUI that publishes directly to WordPress
+- Single Sign-On authentication across all platform services
+- Bulletproof GitHub Actions workflow for zero-downtime deployments
+
+### Success Metrics
+- **Integration Success**: OpenWebUI can create/publish WordPress content within 30 seconds
+- **SSO Success**: Users authenticate once and access all services seamlessly
+- **Deployment Success**: 100% automated deployment with <5 minute rollback capability
+
+## 2. Context & Background
+
+### Current Platform Status
+**✅ Working Foundation** (July 4, 2025):
+- WordPress: Functional at `wordpress-tenant1.local` → `85.215.220.121`
+- OpenWebUI: Functional at `openwebui.local` → `85.215.220.121`
+- IONOS Infrastructure: MKS cluster stable with LoadBalancer
+- MariaDB: Connected and operational
+
+**⚠️ Integration Gaps**:
+- Authentik SSO disabled (PostgreSQL dependency)
+- OAuth2 pipeline disabled
+- WordPress-OpenWebUI connector disabled
+- GitHub deployment workflow validation incomplete
+
+### Technical Architecture
+```
+[User] → [Authentik SSO] → [WordPress | OpenWebUI]
+                ↓
+         [OAuth2 Pipeline] ← → [WordPress MCP Plugin]
+                ↓
+         [Content Integration]
+```
+
+## 3. Product Requirements
+
+### 3.1 WordPress-OpenWebUI Communication Requirements
+
+| User Story | Description | Priority | Acceptance Criteria |
+|------------|-------------|----------|-------------------|
+| **As a content creator**, I want to generate AI content in OpenWebUI and publish it directly to WordPress | Enable seamless content flow between AI generation and CMS | **P0** | - [ ] OpenWebUI can authenticate with WordPress<br>- [ ] Content generated in OpenWebUI appears as WordPress draft<br>- [ ] Images and media transfer correctly<br>- [ ] WordPress metadata (categories, tags) supported |
+| **As a platform admin**, I want to manage WordPress-OpenWebUI connections per tenant | Multi-tenant isolation with secure connections | **P0** | - [ ] Each WordPress tenant can connect to OpenWebUI<br>- [ ] Tenant isolation maintained<br>- [ ] Connection status visible in admin dashboard<br>- [ ] Secure credential management |
+| **As a user**, I want real-time sync status between WordPress and OpenWebUI | Visibility into content transfer process | **P1** | - [ ] Transfer progress indicators<br>- [ ] Error handling and retry logic<br>- [ ] Success/failure notifications<br>- [ ] Content versioning support |
+
+### 3.2 SSO Integration Requirements
+
+| User Story | Description | Priority | Acceptance Criteria |
+|------------|-------------|----------|-------------------|
+| **As a user**, I want to log in once and access both WordPress and OpenWebUI | Single Sign-On across all platform services | **P0** | - [ ] Authentik SSO fully operational<br>- [ ] WordPress OAuth2 integration working<br>- [ ] OpenWebUI OAuth2 integration working<br>- [ ] Session management across services |
+| **As a platform admin**, I want to manage user access centrally | Centralized user and permission management | **P0** | - [ ] Authentik user management interface<br>- [ ] Role-based access control (RBAC)<br>- [ ] Tenant-specific permissions<br>- [ ] Group management and inheritance |
+| **As a security officer**, I want secure authentication with session management | Enterprise-grade security controls | **P1** | - [ ] Multi-factor authentication (MFA)<br>- [ ] Session timeout configuration<br>- [ ] Audit logging for authentication events<br>- [ ] Secure token handling |
+
+### 3.3 GitHub Deployment Workflow Requirements
+
+| User Story | Description | Priority | Acceptance Criteria |
+|------------|-------------|----------|-------------------|
+| **As a developer**, I want automated deployment that validates all integrations | Complete CI/CD pipeline with integration testing | **P0** | - [ ] Infrastructure deployment (Terraform)<br>- [ ] Application deployment (Helm)<br>- [ ] Integration testing (WordPress↔OpenWebUI)<br>- [ ] SSO validation testing<br>- [ ] Rollback capability |
+| **As a platform operator**, I want deployment status visibility and control | Operational oversight of deployment process | **P0** | - [ ] Deployment status dashboard<br>- [ ] Manual approval gates for production<br>- [ ] Environment-specific configurations<br>- [ ] Deployment artifact management |
+| **As a team lead**, I want deployment safety with automated validation | Risk mitigation and quality assurance | **P1** | - [ ] Automated testing at each stage<br>- [ ] Health checks post-deployment<br>- [ ] Performance validation<br>- [ ] Security scanning integration |
+
+### 3.4 Non-Functional Requirements
+
+#### Performance
+- **WordPress-OpenWebUI Communication**: Content transfer <30 seconds
+- **SSO Authentication**: Login response <3 seconds
+- **Deployment Pipeline**: Total deployment <15 minutes
+
+#### Security
+- **OAuth2 Compliance**: RFC 6749 standard implementation
+- **Data Encryption**: TLS 1.3 for all communications
+- **Credential Management**: No plaintext secrets in repositories
+- **Network Isolation**: Private networking between services
+
+#### Scalability
+- **Multi-tenant Support**: 100+ WordPress instances per cluster
+- **Concurrent Users**: 1000+ simultaneous SSO sessions
+- **Deployment Frequency**: Multiple deployments per day capability
+
+## 4. Technical Architecture
+
+### 4.1 Integration Flow Architecture
+```
+GitHub Actions → Terraform → IONOS Cloud
+                     ↓
+    [IONOS MKS Cluster]
+         ↓
+    [PostgreSQL] → [Authentik SSO] ← [Users]
+         ↓              ↓
+    [MariaDB] → [WordPress] ↔ [OAuth2 Pipeline] ↔ [OpenWebUI]
+                     ↑                               ↓
+                [MCP Plugin]                    [AI Models]
+```
+
+### 4.2 Component Dependencies
+
+#### Critical Path 1: SSO Foundation
+1. **PostgreSQL Deployment** → **Authentik Activation** → **OAuth2 Configuration**
+2. **WordPress OAuth2 Client** → **OpenWebUI OAuth2 Client** → **SSO Testing**
+
+#### Critical Path 2: Content Integration
+1. **WordPress MCP Plugin** → **OAuth2 Pipeline Service** → **OpenWebUI Integration**
+2. **Content API Development** → **Transfer Logic** → **Integration Testing**
+
+#### Critical Path 3: Deployment Automation
+1. **Infrastructure Validation** → **Application Health Checks** → **Integration Testing**
+2. **Rollback Procedures** → **Monitoring Setup** → **Alerting Configuration**
+
+### 4.3 Data Model
+
+#### OAuth2 Integration
+```yaml
+# WordPress OAuth2 Client
+client_id: "wordpress-tenant-{tenant_id}"
+client_secret: "{generated_secret}"
+redirect_uri: "https://wordpress-{tenant}.local/oauth2/callback"
+scopes: ["openid", "profile", "email", "openwebui:content"]
+
+# OpenWebUI OAuth2 Client  
+client_id: "openwebui-platform"
+client_secret: "{generated_secret}"
+redirect_uri: "https://openwebui.local/oauth2/callback"
+scopes: ["openid", "profile", "email", "wordpress:publish"]
+```
+
+#### Content Transfer Schema
+```json
+{
+  "content_id": "uuid",
+  "source": "openwebui",
+  "target": "wordpress-tenant1",
+  "title": "string",
+  "content": "html",
+  "status": "draft|published",
+  "metadata": {
+    "categories": ["array"],
+    "tags": ["array"],
+    "featured_image": "url"
+  },
+  "transfer_status": "pending|in_progress|completed|failed"
+}
+```
+
+## 5. Implementation Plan
+
+### 5.1 Phase 1: SSO Foundation (Week 1-2)
+**Milestone**: Complete SSO authentication across all services
+
+#### Tasks:
+1. **PostgreSQL Cluster Deployment**
+   - Deploy IONOS PostgreSQL cluster for Authentik
+   - Configure networking and security groups
+   - Update Terraform infrastructure module
+
+2. **Authentik Re-enablement**
+   - Scale Authentik deployments from 0 to 1
+   - Configure PostgreSQL connection
+   - Validate Authentik web interface
+
+3. **WordPress OAuth2 Integration**
+   - Enable WordPress OAuth2 plugin
+   - Configure Authentik OIDC provider
+   - Test WordPress SSO login flow
+
+4. **OpenWebUI OAuth2 Integration**
+   - Configure OpenWebUI OAuth2 settings
+   - Test OpenWebUI SSO login flow
+   - Validate cross-service session management
+
+#### Success Criteria:
+- [ ] Users can log into Authentik
+- [ ] WordPress redirects to Authentik for authentication
+- [ ] OpenWebUI redirects to Authentik for authentication
+- [ ] Single logout works across all services
+
+### 5.2 Phase 2: Content Integration (Week 3-4)
+**Milestone**: WordPress and OpenWebUI can exchange content securely
+
+#### Tasks:
+1. **OAuth2 Pipeline Service**
+   - Enable OAuth2 pipeline in OpenWebUI
+   - Configure WordPress API endpoints
+   - Implement secure token exchange
+
+2. **WordPress MCP Plugin Activation**
+   - Enable WordPress MCP plugin
+   - Configure content publishing permissions
+   - Test content creation via API
+
+3. **Content Transfer Logic**
+   - Implement OpenWebUI → WordPress content flow
+   - Add support for images and media
+   - Create content status tracking
+
+4. **Integration Testing**
+   - End-to-end content creation workflow
+   - Multi-tenant content isolation testing
+   - Error handling and retry logic
+
+#### Success Criteria:
+- [ ] Content created in OpenWebUI appears in WordPress
+- [ ] Images and media transfer correctly
+- [ ] Multiple tenants can operate independently
+- [ ] Failed transfers are retried automatically
+
+### 5.3 Phase 3: Deployment Automation (Week 5-6)
+**Milestone**: Complete end-to-end automated deployment with validation
+
+#### Tasks:
+1. **GitHub Actions Enhancement**
+   - Add PostgreSQL deployment to infrastructure workflow
+   - Include Authentik scaling in platform workflow
+   - Add integration testing to deployment pipeline
+
+2. **Integration Testing Automation**
+   - Automated SSO login testing
+   - Automated content transfer testing
+   - Health check validation
+
+3. **Rollback Procedures**
+   - Automated rollback triggers
+   - Database backup/restore procedures
+   - Service health monitoring
+
+4. **Monitoring and Alerting**
+   - Integration health dashboards
+   - Failed authentication alerts
+   - Content transfer failure notifications
+
+#### Success Criteria:
+- [ ] Complete deployment succeeds without manual intervention
+- [ ] Integration tests pass automatically
+- [ ] Rollback procedures work within 5 minutes
+- [ ] Monitoring captures all critical metrics
+
+## 6. GitHub Actions Workflow Design
+
+### 6.1 Deployment Pipeline Architecture
+```yaml
+# .github/workflows/deploy.yml
+name: Complete Platform Deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  infrastructure:
+    name: Deploy Infrastructure
+    steps:
+      - name: Deploy IONOS MKS Cluster
+      - name: Deploy PostgreSQL Cluster
+      - name: Configure Networking
+      - name: Validate Infrastructure
+
+  platform:
+    needs: infrastructure
+    name: Deploy Platform Services
+    steps:
+      - name: Deploy Authentik with PostgreSQL
+      - name: Deploy OpenWebUI
+      - name: Configure Ingress
+      - name: Validate Platform Health
+
+  tenants:
+    needs: platform
+    name: Deploy Tenant Services
+    steps:
+      - name: Deploy WordPress Tenants
+      - name: Configure MariaDB Connections
+      - name: Enable OAuth2 Integrations
+      - name: Validate Tenant Health
+
+  integration-tests:
+    needs: tenants
+    name: Integration Testing
+    steps:
+      - name: Test SSO Authentication
+      - name: Test WordPress-OpenWebUI Communication
+      - name: Test Content Transfer
+      - name: Validate Multi-tenant Isolation
+
+  monitoring:
+    needs: integration-tests
+    name: Setup Monitoring
+    steps:
+      - name: Deploy Monitoring Stack
+      - name: Configure Dashboards
+      - name: Setup Alerting
+      - name: Generate Deployment Report
+```
+
+### 6.2 Critical Validation Points
+
+#### Infrastructure Validation
+```bash
+# Cluster Health
+kubectl get nodes
+kubectl get pods -A
+ionosctl k8s cluster get --cluster-id $CLUSTER_ID
+
+# Database Connectivity  
+kubectl exec -it postgresql-client -- psql -h $PG_HOST -U $PG_USER -d authentik
+kubectl exec -it mariadb-client -- mysql -h $MARIADB_HOST -u $MARIADB_USER -p$MARIADB_PASS
+```
+
+#### Integration Validation
+```bash
+# SSO Health Check
+curl -f "https://authentik.local/api/v3/admin/system/"
+
+# WordPress API Check
+curl -H "Host: wordpress-tenant1.local" "http://85.215.220.121/wp-json/wp/v2/posts"
+
+# OpenWebUI API Check  
+curl -H "Host: openwebui.local" "http://85.215.220.121/api/config"
+
+# Content Transfer Test
+curl -X POST "https://openwebui.local/api/wordpress/publish" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"title": "Test Post", "content": "Generated by OpenWebUI"}'
+```
+
+## 7. Risk Management
+
+### 7.1 Technical Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| **PostgreSQL deployment failure** | High | Medium | • Test PostgreSQL deployment in staging<br>• Prepare manual deployment procedures<br>• Have backup authentication method |
+| **OAuth2 integration complexity** | High | High | • Use proven OAuth2 libraries<br>• Implement comprehensive testing<br>• Create detailed integration documentation |
+| **Content transfer reliability** | Medium | Medium | • Implement retry logic with exponential backoff<br>• Add comprehensive error logging<br>• Create manual content transfer tools |
+| **GitHub Actions workflow failures** | Medium | High | • Test workflows in feature branches<br>• Implement stage-by-stage validation<br>• Prepare manual deployment fallbacks |
+
+### 7.2 Security Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| **OAuth2 token exposure** | High | Low | • Use secure token storage (Kubernetes secrets)<br>• Implement token rotation<br>• Monitor for token misuse |
+| **Cross-tenant data leakage** | High | Low | • Implement strict tenant isolation<br>• Add tenant ID validation to all APIs<br>• Regular security testing |
+| **Authentik compromise** | High | Low | • Regular security updates<br>• MFA enforcement<br>• Session timeout configuration |
+
+## 8. Success Metrics & Monitoring
+
+### 8.1 Key Performance Indicators
+
+#### Technical Metrics
+- **Deployment Success Rate**: >95% successful deployments
+- **Integration Uptime**: >99.5% WordPress-OpenWebUI communication availability
+- **SSO Response Time**: <3 seconds average authentication time
+- **Content Transfer Speed**: <30 seconds for typical blog post
+
+#### User Experience Metrics
+- **Login Success Rate**: >99% successful SSO authentications
+- **Content Publishing Success**: >95% successful content transfers
+- **Platform Availability**: >99.9% uptime across all services
+
+#### Operational Metrics
+- **Deployment Frequency**: Support for multiple daily deployments
+- **Mean Time to Recovery**: <5 minutes for automated rollbacks
+- **Failed Integration Detection**: <2 minutes to detect and alert
+
+### 8.2 Monitoring Dashboard Requirements
+
+#### Real-time Health Status
+```yaml
+Services:
+  - Authentik: Status, Response Time, Active Sessions
+  - WordPress: Status, Database Connection, API Response
+  - OpenWebUI: Status, Model Availability, Active Users
+  - Integration: Content Transfer Queue, Success/Failure Rates
+
+Infrastructure:
+  - IONOS MKS: Node Health, Pod Status, Resource Usage
+  - PostgreSQL: Connection Count, Query Performance
+  - MariaDB: Connection Status, Replication Lag
+  - Networking: LoadBalancer Health, Ingress Response
+```
+
+#### Alert Thresholds
+- **Service Down**: Immediate alert (0 tolerance)
+- **High Response Time**: >5 seconds average over 5 minutes
+- **Failed Integrations**: >5% failure rate over 10 minutes
+- **Authentication Failures**: >10% failure rate over 5 minutes
+
+## 9. Claude Code Implementation Guidelines
+
+### 9.1 Development Workflow for Claude Code
+
+```bash
+# 1. Environment Setup
+ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+export KUBECONFIG=./kubeconfig.yaml
+
+# 2. Validate Current State
+kubectl get pods -A
+kubectl get services -A
+kubectl get ingress -A
+
+# 3. PostgreSQL Deployment Check
+kubectl get postgresql -n admin-apps || echo "PostgreSQL needs deployment"
+
+# 4. Authentik Status Check  
+kubectl get deployment authentik-server -n admin-apps
+kubectl scale deployment authentik-server -n admin-apps --replicas=1
+
+# 5. Integration Testing
+./scripts/test-sso-integration.sh
+./scripts/test-content-transfer.sh
+```
+
+### 9.2 Code Quality Standards
+
+#### Security Requirements
+- **No hardcoded secrets**: All credentials via environment variables or Kubernetes secrets
+- **Input validation**: Sanitize all content before WordPress insertion
+- **Rate limiting**: Implement API rate limits for content transfers
+- **Audit logging**: Log all authentication and content transfer events
+
+#### Testing Requirements
+```bash
+# Unit Tests
+pytest tests/unit/
+
+# Integration Tests  
+pytest tests/integration/
+
+# End-to-End Tests
+./scripts/e2e-test-suite.sh
+
+# Security Scans
+./scripts/security-scan.sh
+```
+
+#### Documentation Standards
+- **API Documentation**: OpenAPI/Swagger for all new endpoints
+- **Integration Guides**: Step-by-step setup for each component
+- **Troubleshooting**: Common issues and resolution procedures
+- **Architecture Diagrams**: Current state and proposed changes
+
+### 9.3 Claude-Specific Verification Commands
+
+```bash
+# Quick Health Check
+kubectl get pods -A | grep -E "(authentik|wordpress|openwebui)" 
+
+# Service Connectivity Test
+curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/
+curl -H "Host: openwebui.local" http://85.215.220.121/api/config
+
+# OAuth2 Flow Test  
+curl -L "https://authentik.local/application/o/wordpress-tenant1/"
+
+# Content Integration Test
+./scripts/test-wordpress-openwebui-integration.sh
+
+# Deployment Validation
+./scripts/validate-full-deployment.sh
+```
+
+## 10. Appendices
+
+### 10.1 Current Service URLs
+- **WordPress**: `wordpress-tenant1.local` → `85.215.220.121`
+- **OpenWebUI**: `openwebui.local` → `85.215.220.121`  
+- **Authentik**: `authentik.local` → `85.215.220.121` (to be enabled)
+- **LoadBalancer**: `85.215.220.121`
+
+### 10.2 Critical File Locations
+```
+terraform/
+├── infrastructure/    # MKS cluster, networking
+├── platform/         # Authentik, OpenWebUI, Ingress  
+└── tenant/           # WordPress instances
+
+charts/
+├── authentik/        # SSO provider Helm chart
+├── openwebui/        # AI interface Helm chart
+└── wordpress/        # CMS Helm chart
+
+docker/wordpress/     # Custom WordPress image with MCP plugin
+pipelines/           # OAuth2 integration service
+.github/workflows/   # CI/CD automation
+```
+
+### 10.3 Environment Variables Required
+```bash
+# IONOS Cloud
+IONOS_TOKEN="your-ionos-api-token"
+IONOS_USERNAME="your-ionos-username"  
+IONOS_PASSWORD="your-ionos-password"
+
+# Database
+POSTGRES_PASSWORD="generated-postgres-password"
+MARIADB_ROOT_PASSWORD="generated-mariadb-password"
+
+# OAuth2
+AUTHENTIK_SECRET_KEY="generated-secret-key"
+WORDPRESS_OAUTH2_CLIENT_SECRET="generated-client-secret"
+OPENWEBUI_OAUTH2_CLIENT_SECRET="generated-client-secret"
+
+# GitHub Actions
+TF_VAR_ionos_token="${{ secrets.IONOS_TOKEN }}"
+KUBECONFIG_DATA="${{ secrets.KUBECONFIG_DATA }}"
+```
+
+---
+
+## Next Steps
+
+1. **Review and validate** this PRD against your specific requirements
+2. **Prioritize phases** based on your timeline and business needs  
+3. **Begin Phase 1** with PostgreSQL deployment and Authentik re-enablement
+4. **Set up monitoring** for the integration development process
+5. **Create feature branches** for each integration component
+
+This PRD provides a complete roadmap for achieving full WordPress-OpenWebUI integration with SSO and automated deployment validation.
