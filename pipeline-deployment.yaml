@@ -19,7 +19,7 @@ spec:
       - name: ionos-cr-secret
       containers:
       - name: wordpress-oauth-pipeline
-        image: wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:425d071
+        image: wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest
         ports:
         - containerPort: 9099
         envFrom:

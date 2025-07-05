@@ -74,13 +74,13 @@ spec:
     spec:
       containers:
       - name: health-monitor
-        image: curlimages/curl:latest
+        image: alpine:latest
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            # Install jq
-            apk add --no-cache jq
+            # Install curl and jq
+            apk add --no-cache curl jq
             
             # Run health checks every 60 seconds
             while true; do
