@@ -334,8 +334,9 @@ async def on_shutdown():
     pipeline.logger.info(f"Shutting down {pipeline.name}")
 
 
-# Import WordPress API client
-from wordpress_client import wordpress_client
+# Import WordPress API client  
+from wordpress_client import WordPressAPIClient
+wordpress_client = WordPressAPIClient()
 
 # Add WordPress API endpoints
 @app.get("/api/wordpress/posts")
