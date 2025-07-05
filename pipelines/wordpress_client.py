@@ -11,7 +11,7 @@ import httpx
 import base64
 from urllib.parse import urljoin
 
-from .wordpress_oauth import pipeline as oauth_pipeline
+from wordpress_oauth import pipeline as oauth_pipeline
 
 
 class WordPressAPIClient:

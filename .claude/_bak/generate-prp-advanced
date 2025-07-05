@@ -1,0 +1,762 @@
+#!/usr/bin/env python3
+# .claude/commands/generate-prp-advanced
+"""
+Advanced Claude Code PRP Generator
+Intelligently adapts questions based on project type and technology stack
+"""
+
+import json
+import os
+import sys
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+import re
+
+class Colors:
+    """ANSI color codes for terminal output"""
+    RED = '\033[0;31m'
+    GREEN = '\033[0;32m'
+    BLUE = '\033[0;34m'
+    YELLOW = '\033[1;33m'
+    CYAN = '\033[0;36m'
+    PURPLE = '\033[0;35m'
+    NC = '\033[0m'  # No Color
+
+class PRPGenerator:
+    def __init__(self):
+        self.project_data = {}
+        self.intelligent_questions = []
+        
+    def print_header(self):
+        """Print the tool header"""
+        print(f"\n{Colors.BLUE}╔══════════════════════════════════════════════╗{Colors.NC}")
+        print(f"{Colors.BLUE}║{Colors.NC}     {Colors.CYAN}Advanced Claude Code PRP Generator{Colors.NC}     {Colors.BLUE}║{Colors.NC}")
+        print(f"{Colors.BLUE}║{Colors.NC}    AI-Enhanced Requirements Planning      {Colors.BLUE}║{Colors.NC}")
+        print(f"{Colors.BLUE}╚══════════════════════════════════════════════╝{Colors.NC}\n")
+        
+    def print_section(self, title: str):
+        """Print a section header"""
+        print(f"\n{Colors.YELLOW}━━━ {title} ━━━{Colors.NC}")
+        
+    def print_info(self, message: str):
+        """Print an info message"""
+        print(f"{Colors.CYAN}ℹ{Colors.NC} {message}")
+        
+    def print_success(self, message: str):
+        """Print a success message"""
+        print(f"{Colors.GREEN}✓{Colors.NC} {message}")
+        
+    def print_error(self, message: str):
+        """Print an error message"""
+        print(f"{Colors.RED}✗{Colors.NC} {message}")
+        
+    def print_tip(self, message: str):
+        """Print a helpful tip"""
+        print(f"{Colors.PURPLE}💡{Colors.NC} {message}")
+        
+    def prompt_input(self, prompt: str, required: bool = True, validation_fn: Optional[callable] = None) -> str:
+        """Prompt for user input with validation"""
+        while True:
+            print(f"{Colors.CYAN}?{Colors.NC} {prompt}")
+            if not required:
+                print(f"  {Colors.YELLOW}(Optional - press Enter to skip){Colors.NC}")
+            
+            try:
+                user_input = input().strip()
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{Colors.YELLOW}Exiting...{Colors.NC}")
+                sys.exit(0)
+                
+            if not user_input and required:
+                self.print_error("This field is required. Please provide a value.")
+                continue
+                
+            if validation_fn and user_input:
+                if not validation_fn(user_input):
+                    self.print_error("Invalid input. Please try again.")
+                    continue
+                    
+            return user_input
+            
+    def prompt_multiline(self, prompt: str) -> str:
+        """Prompt for multi-line input"""
+        print(f"{Colors.CYAN}?{Colors.NC} {prompt}")
+        print(f"  {Colors.YELLOW}(Enter multiple lines, type 'END' on a new line to finish){Colors.NC}")
+        
+        lines = []
+        while True:
+            try:
+                line = input()
+                if line == "END":
+                    break
+                lines.append(line)
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{Colors.YELLOW}Exiting...{Colors.NC}")
+                sys.exit(0)
+                
+        return "\n".join(lines)
+        
+    def prompt_yesno(self, prompt: str, default: str = "n") -> bool:
+        """Prompt for yes/no input"""
+        while True:
+            print(f"{Colors.CYAN}?{Colors.NC} {prompt} {Colors.YELLOW}(y/n, default: {default}){Colors.NC}")
+            try:
+                response = input().strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{Colors.YELLOW}Exiting...{Colors.NC}")
+                sys.exit(0)
+                
+            if not response:
+                response = default
+                
+            if response in ['y', 'yes']:
+                return True
+            elif response in ['n', 'no']:
+                return False
+            else:
+                self.print_error("Please answer yes (y) or no (n).")
+                
+    def prompt_select(self, prompt: str, options: List[str]) -> str:
+        """Prompt for selection from options"""
+        print(f"{Colors.CYAN}?{Colors.NC} {prompt}")
+        for i, option in enumerate(options, 1):
+            print(f"  {Colors.YELLOW}{i}.{Colors.NC} {option}")
+            
+        while True:
+            try:
+                choice = input(f"  {Colors.CYAN}Enter choice (1-{len(options)}): {Colors.NC}").strip()
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{Colors.YELLOW}Exiting...{Colors.NC}")
+                sys.exit(0)
+                
+            try:
+                choice_num = int(choice)
+                if 1 <= choice_num <= len(options):
+                    return options[choice_num - 1]
+                else:
+                    self.print_error(f"Invalid choice. Please enter a number between 1 and {len(options)}.")
+            except ValueError:
+                self.print_error("Please enter a valid number.")
+                
+    def detect_project_context(self) -> Dict[str, Any]:
+        """Analyze the current directory to understand project context"""
+        context = {
+            "detected_stack": [],
+            "detected_framework": None,
+            "has_tests": False,
+            "has_ci": False,
+            "package_manager": None,
+            "database_files": [],
+            "config_files": []
+        }
+        
+        # Check for common files and directories
+        files_and_dirs = os.listdir('.')
+        
+        # Detect technology stack
+        if 'package.json' in files_and_dirs:
+            context["detected_stack"].append("Node.js/JavaScript")
+            context["package_manager"] = "npm/yarn"
+            
+        if 'requirements.txt' in files_and_dirs or 'pyproject.toml' in files_and_dirs:
+            context["detected_stack"].append("Python")
+            context["package_manager"] = "pip/poetry"
+            
+        if 'Gemfile' in files_and_dirs:
+            context["detected_stack"].append("Ruby")
+            context["package_manager"] = "bundler"
+            
+        if 'pom.xml' in files_and_dirs or 'build.gradle' in files_and_dirs:
+            context["detected_stack"].append("Java")
+            
+        if 'go.mod' in files_and_dirs:
+            context["detected_stack"].append("Go")
+            
+        # Detect frameworks
+        try:
+            if 'package.json' in files_and_dirs:
+                with open('package.json', 'r') as f:
+                    pkg_data = json.load(f)
+                    deps = {**pkg_data.get('dependencies', {}), **pkg_data.get('devDependencies', {})}
+                    
+                    if 'react' in deps:
+                        context["detected_framework"] = "React"
+                    elif 'vue' in deps:
+                        context["detected_framework"] = "Vue"
+                    elif 'angular' in deps or '@angular/core' in deps:
+                        context["detected_framework"] = "Angular"
+                    elif 'express' in deps:
+                        context["detected_framework"] = "Express"
+                    elif 'next' in deps:
+                        context["detected_framework"] = "Next.js"
+        except:
+            pass
+            
+        # Check for testing
+        test_indicators = ['test', 'tests', '__tests__', 'spec', '__pycache__']
+        context["has_tests"] = any(indicator in files_and_dirs for indicator in test_indicators)
+        
+        # Check for CI/CD
+        ci_indicators = ['.github', '.gitlab-ci.yml', '.travis.yml', 'Jenkinsfile', '.circleci']
+        context["has_ci"] = any(indicator in files_and_dirs for indicator in ci_indicators)
+        
+        # Check for databases
+        db_files = [f for f in files_and_dirs if f.endswith(('.db', '.sqlite', '.sqlite3'))]
+        context["database_files"] = db_files
+        
+        # Check for config files
+        config_patterns = ['.env', 'config', '.config', 'docker-compose', 'Dockerfile']
+        config_files = [f for f in files_and_dirs for pattern in config_patterns if pattern in f.lower()]
+        context["config_files"] = config_files
+        
+        return context
+        
+    def generate_intelligent_questions(self, project_type: str, tech_stack: str, context: Dict[str, Any]):
+        """Generate context-aware questions based on project details"""
+        questions = []
+        
+        # Frontend-specific questions
+        if any(framework in tech_stack.lower() for framework in ['react', 'vue', 'angular', 'frontend']):
+            questions.extend([
+                "What browsers need to be supported?",
+                "Are there specific responsive design requirements?",
+                "Do you need to support offline functionality?",
+                "Are there any accessibility (a11y) requirements?",
+                "What's the preferred state management approach?"
+            ])
+            
+        # Backend-specific questions  
+        if any(tech in tech_stack.lower() for tech in ['node', 'express', 'python', 'django', 'flask', 'api']):
+            questions.extend([
+                "What authentication/authorization approach should be used?",
+                "Are there rate limiting requirements?",
+                "What's the expected request volume?",
+                "Are there specific logging requirements?",
+                "What error handling strategy should be implemented?"
+            ])
+            
+        # Database-related questions
+        if context["database_files"] or any(db in tech_stack.lower() for db in ['mysql', 'postgres', 'mongo', 'sqlite']):
+            questions.extend([
+                "Are there data migration requirements?",
+                "What's the backup and recovery strategy?",
+                "Are there specific database performance requirements?",
+                "Do you need database indexing optimization?"
+            ])
+            
+        # Testing questions
+        if context["has_tests"] or 'test' in project_type.lower():
+            questions.extend([
+                "What test coverage percentage is required?",
+                "Should integration tests be included?",
+                "Are there specific testing frameworks to use?",
+                "Do you need performance/load testing?"
+            ])
+            
+        # Deployment questions
+        if context["has_ci"] or 'deploy' in project_type.lower():
+            questions.extend([
+                "What's the deployment strategy (blue-green, rolling, etc.)?",
+                "Are there environment-specific configurations?",
+                "What monitoring and alerting is needed?",
+                "Are there rollback procedures to consider?"
+            ])
+            
+        # Security questions for certain project types
+        if any(keyword in project_type.lower() for keyword in ['auth', 'security', 'api', 'user']):
+            questions.extend([
+                "What data encryption requirements exist?",
+                "Are there compliance requirements (GDPR, HIPAA, etc.)?",
+                "What security audit requirements exist?",
+                "Are there password policy requirements?"
+            ])
+            
+        self.intelligent_questions = list(set(questions))  # Remove duplicates
+        
+    def gather_basic_info(self):
+        """Gather basic project information"""
+        self.print_section("Project Overview")
+        
+        # Detect project context
+        context = self.detect_project_context()
+        
+        if context["detected_stack"]:
+            self.print_info(f"Detected technology: {', '.join(context['detected_stack'])}")
+        if context["detected_framework"]:
+            self.print_info(f"Detected framework: {context['detected_framework']}")
+        if context["has_tests"]:
+            self.print_info("Test files detected")
+        if context["has_ci"]:
+            self.print_info("CI/CD configuration detected")
+            
+        self.project_data["context"] = context
+        
+        # Basic project info
+        self.project_data["name"] = self.prompt_input("What is the name of your project/feature?")
+        self.project_data["description"] = self.prompt_input("Provide a brief description (1-2 sentences):")
+        
+        project_types = [
+            "New Feature Development",
+            "Bug Fix/Maintenance", 
+            "Refactoring/Technical Debt",
+            "Performance Optimization",
+            "Integration/API Development",
+            "UI/UX Improvement",
+            "Testing/Quality Assurance",
+            "Security Enhancement",
+            "Documentation",
+            "DevOps/Infrastructure",
+            "Database Migration",
+            "Other"
+        ]
+        
+        self.project_data["type"] = self.prompt_select("What type of project is this?", project_types)
+        
+        if self.project_data["type"] == "Other":
+            self.project_data["type"] = self.prompt_input("Please specify the project type:")
+            
+        # Technology stack with smart defaults
+        default_stack = ", ".join(context["detected_stack"]) if context["detected_stack"] else ""
+        if default_stack:
+            self.print_tip(f"Detected stack: {default_stack}")
+            
+        self.project_data["tech_stack"] = self.prompt_input(
+            f"What is your primary technology stack? (e.g., React, Node.js, Python, etc.)",
+            required=bool(not default_stack)
+        ) or default_stack
+        
+        # Generate intelligent questions based on context
+        self.generate_intelligent_questions(
+            self.project_data["type"], 
+            self.project_data["tech_stack"], 
+            context
+        )
+        
+    def gather_detailed_requirements(self):
+        """Gather detailed project requirements"""
+        
+        # Technical Context
+        self.print_section("Technical Context")
+        
+        self.project_data["affected_files"] = self.prompt_input("What files/directories will this primarily affect?")
+        self.project_data["db_changes"] = self.prompt_yesno("Does this involve database changes?")
+        self.project_data["api_changes"] = self.prompt_yesno("Does this require API modifications?")
+        self.project_data["test_changes"] = self.prompt_yesno("Will this affect existing tests?")
+        
+        # Business Requirements
+        self.print_section("Business Requirements")
+        
+        self.project_data["problem_statement"] = self.prompt_multiline(
+            "What problem are you trying to solve? Describe the current pain points:"
+        )
+        self.project_data["success_criteria"] = self.prompt_multiline(
+            "What is the desired outcome? How will success be measured?"
+        )
+        self.project_data["target_users"] = self.prompt_input("Who are the primary users/stakeholders affected?")
+        
+        # Functional Requirements
+        self.print_section("Functional Requirements")
+        
+        self.project_data["functional_requirements"] = self.prompt_multiline(
+            "What specific functionality needs to be implemented? List the key features:"
+        )
+        self.project_data["user_workflows"] = self.prompt_multiline(
+            "Are there any specific user interactions or workflows to consider?"
+        )
+        self.project_data["input_output_specs"] = self.prompt_multiline(
+            "What are the input/output requirements?"
+        )
+        
+    def gather_technical_requirements(self):
+        """Gather technical requirements"""
+        self.print_section("Technical Requirements")
+        
+        # Performance
+        self.project_data["has_performance_reqs"] = self.prompt_yesno("Are there specific performance requirements?")
+        if self.project_data["has_performance_reqs"]:
+            self.project_data["performance_requirements"] = self.prompt_input("Describe the performance requirements:")
+            
+        # Security
+        self.project_data["has_security_reqs"] = self.prompt_yesno("Are there security considerations?")
+        if self.project_data["has_security_reqs"]:
+            self.project_data["security_requirements"] = self.prompt_input("Describe the security requirements:")
+            
+        # Scalability
+        self.project_data["has_scalability_reqs"] = self.prompt_yesno("Are there scalability requirements?")
+        if self.project_data["has_scalability_reqs"]:
+            self.project_data["scalability_requirements"] = self.prompt_input("Describe the scalability requirements:")
+            
+    def ask_intelligent_questions(self):
+        """Ask context-aware intelligent questions"""
+        if not self.intelligent_questions:
+            return
+            
+        self.print_section("Context-Specific Questions")
+        self.print_info(f"Based on your project type and tech stack, here are some relevant questions:")
+        
+        responses = {}
+        for question in self.intelligent_questions[:8]:  # Limit to 8 most relevant questions
+            response = self.prompt_input(question, required=False)
+            if response:
+                responses[question] = response
+                
+        self.project_data["intelligent_responses"] = responses
+        
+    def gather_dependencies_and_constraints(self):
+        """Gather dependency and constraint information"""
+        self.print_section("Dependencies & Constraints")
+        
+        self.project_data["external_dependencies"] = self.prompt_input(
+            "What external dependencies does this rely on? (libraries, APIs, services)", 
+            required=False
+        )
+        self.project_data["internal_dependencies"] = self.prompt_input(
+            "What internal dependencies are there? (other features, services)", 
+            required=False
+        )
+        self.project_data["constraints"] = self.prompt_multiline(
+            "Are there any constraints or limitations to be aware of?"
+        )
+        
+    def gather_implementation_guidance(self):
+        """Gather implementation guidance"""
+        self.print_section("Implementation Guidance")
+        
+        dev_approaches = [
+            "Test-Driven Development (TDD)",
+            "Behavior-Driven Development (BDD)", 
+            "Incremental Development",
+            "Prototype First",
+            "Documentation First",
+            "No Preference"
+        ]
+        
+        self.project_data["dev_approach"] = self.prompt_select("What's your preferred development approach?", dev_approaches)
+        self.project_data["coding_standards"] = self.prompt_multiline(
+            "Are there any specific coding standards, patterns, or conventions to follow?"
+        )
+        self.project_data["testing_strategy"] = self.prompt_input("What testing strategy should be used?", required=False)
+        
+    def gather_risk_assessment(self):
+        """Gather risk assessment information"""
+        self.print_section("Risk Assessment")
+        
+        self.project_data["risks"] = self.prompt_multiline("What are the potential risks or challenges?")
+        self.project_data["uncertainty_areas"] = self.prompt_multiline(
+            "Are there any areas where you're uncertain and need Claude's expertise?"
+        )
+        
+    def gather_additional_context(self):
+        """Gather additional context"""
+        self.print_section("Additional Context")
+        
+        self.project_data["additional_context"] = self.prompt_multiline(
+            "Is there any additional context, background, or special considerations?"
+        )
+        self.project_data["reference_materials"] = self.prompt_input(
+            "Are there any reference materials, documentation, or examples to consider?", 
+            required=False
+        )
+        
+    def generate_prp_file(self):
+        """Generate the PRP markdown file"""
+        self.print_section("Generating PRP File")
+        
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        project_name_clean = re.sub(r'[^\w\s-]', '', self.project_data["name"]).strip()
+        project_name_clean = re.sub(r'[-\s]+', '_', project_name_clean)
+        
+        filename = f"{project_name_clean.lower()}_PRP_{current_date}.md"
+        
+        self.print_info(f"Creating PRP file: {filename}")
+        
+        # Generate the markdown content
+        content = self._generate_markdown_content(current_date)
+        
+        # Write to file
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        self.print_success(f"PRP file created successfully: {filename}")
+        
+        # Offer to view the file
+        if self.prompt_yesno("Would you like to view the generated PRP file?"):
+            print(f"\n{Colors.YELLOW}━━━ PRP File Contents ━━━{Colors.NC}")
+            print(content)
+            
+        self.print_info(f"You can now use this PRP file with Claude Code by referencing it in your conversations.")
+        self.print_info(f"Example: 'Based on the PRP file {filename}, please implement the core functionality.'")
+        
+        # Offer to update CLAUDE.md
+        if self.prompt_yesno("Would you like to add this PRP to your CLAUDE.md file?"):
+            self._update_claude_md(filename, current_date)
+            
+        return filename
+        
+    def _generate_markdown_content(self, current_date: str) -> str:
+        """Generate the markdown content for the PRP file"""
+        content = f"""# Project Requirements Planning (PRP)
+
+## Project Information
+- **Project Name:** {self.project_data["name"]}
+- **Date Created:** {current_date}
+- **Project Type:** {self.project_data["type"]}
+- **Primary Technology Stack:** {self.project_data["tech_stack"]}
+
+## Executive Summary
+{self.project_data["description"]}
+
+## Problem Statement
+{self.project_data["problem_statement"]}
+
+## Success Criteria
+{self.project_data["success_criteria"]}
+
+## Target Users/Stakeholders
+{self.project_data["target_users"]}
+
+## Technical Context
+- **Affected Files/Directories:** {self.project_data["affected_files"]}
+- **Database Changes Required:** {"Yes" if self.project_data["db_changes"] else "No"}
+- **API Modifications Required:** {"Yes" if self.project_data["api_changes"] else "No"}
+- **Test Updates Required:** {"Yes" if self.project_data["test_changes"] else "No"}
+
+### Detected Project Context
+"""
+
+        context = self.project_data["context"]
+        if context["detected_stack"]:
+            content += f"- **Detected Technologies:** {', '.join(context['detected_stack'])}\n"
+        if context["detected_framework"]:
+            content += f"- **Detected Framework:** {context['detected_framework']}\n"
+        if context["package_manager"]:
+            content += f"- **Package Manager:** {context['package_manager']}\n"
+        if context["has_tests"]:
+            content += "- **Testing:** Test files detected\n"
+        if context["has_ci"]:
+            content += "- **CI/CD:** Configuration files detected\n"
+        if context["database_files"]:
+            content += f"- **Database Files:** {', '.join(context['database_files'])}\n"
+        if context["config_files"]:
+            content += f"- **Config Files:** {', '.join(context['config_files'])}\n"
+
+        content += f"""
+## Functional Requirements
+### Core Functionality
+{self.project_data["functional_requirements"]}
+
+### User Workflows
+{self.project_data["user_workflows"]}
+
+### Input/Output Specifications
+{self.project_data["input_output_specs"]}
+
+## Technical Requirements
+"""
+
+        if self.project_data.get("has_performance_reqs"):
+            content += f"""### Performance Requirements
+{self.project_data.get("performance_requirements", "")}
+"""
+
+        if self.project_data.get("has_security_reqs"):
+            content += f"""### Security Requirements
+{self.project_data.get("security_requirements", "")}
+"""
+
+        if self.project_data.get("has_scalability_reqs"):
+            content += f"""### Scalability Requirements
+{self.project_data.get("scalability_requirements", "")}
+"""
+
+        content += f"""
+## Dependencies
+### External Dependencies
+{self.project_data.get("external_dependencies") or "_None specified_"}
+
+### Internal Dependencies
+{self.project_data.get("internal_dependencies") or "_None specified_"}
+
+## Constraints and Limitations
+{self.project_data["constraints"]}
+
+## Implementation Approach
+- **Preferred Development Approach:** {self.project_data["dev_approach"]}
+"""
+
+        if self.project_data.get("testing_strategy"):
+            content += f"- **Testing Strategy:** {self.project_data['testing_strategy']}\n"
+
+        content += f"""
+### Coding Standards and Conventions
+{self.project_data["coding_standards"]}
+
+## Risk Assessment
+### Potential Risks and Challenges
+{self.project_data["risks"]}
+
+### Areas of Uncertainty
+{self.project_data["uncertainty_areas"]}
+"""
+
+        # Add intelligent questions responses if any
+        if self.project_data.get("intelligent_responses"):
+            content += "\n## Context-Specific Considerations\n"
+            for question, response in self.project_data["intelligent_responses"].items():
+                content += f"**{question}**\n{response}\n\n"
+
+        content += f"""
+## Additional Context
+{self.project_data["additional_context"]}
+"""
+
+        if self.project_data.get("reference_materials"):
+            content += f"""
+## Reference Materials
+{self.project_data["reference_materials"]}
+"""
+
+        content += f"""
+## Implementation Checklist
+- [ ] Review and validate all requirements
+- [ ] Set up development environment
+- [ ] Create/update project structure
+- [ ] Implement core functionality
+- [ ] Add comprehensive tests
+- [ ] Update documentation
+- [ ] Perform code review
+- [ ] Test in staging environment
+- [ ] Deploy to production
+
+## Notes for Claude Code
+This PRP document is designed to provide comprehensive context for Claude Code development. Please:
+
+1. **Analyze the requirements thoroughly** before starting implementation
+2. **Ask clarifying questions** if any requirements are ambiguous
+3. **Follow the specified development approach** and coding standards
+4. **Consider the risks and constraints** during implementation
+5. **Implement comprehensive testing** as specified
+6. **Document your implementation decisions** and rationale
+
+### Project Context Analysis
+The following project characteristics were automatically detected:
+"""
+
+        # Add analysis of detected context
+        context = self.project_data["context"]
+        if context["detected_stack"]:
+            content += f"- This appears to be a {', '.join(context['detected_stack'])} project\n"
+        if context["detected_framework"]:
+            content += f"- Framework: {context['detected_framework']}\n"
+        if context["has_tests"]:
+            content += "- Testing infrastructure is already in place\n"
+        if context["has_ci"]:
+            content += "- CI/CD pipeline exists and should be considered\n"
+
+        content += f"""
+---
+
+*Generated by Advanced Claude Code PRP Generator on {current_date}*
+*Based on intelligent analysis of project context and requirements*
+"""
+
+        return content
+        
+    def _update_claude_md(self, filename: str, current_date: str):
+        """Update or create CLAUDE.md file with PRP reference"""
+        claude_md_entry = f"""
+## Current PRP: {self.project_data["name"]}
+- **File:** {filename}
+- **Created:** {current_date}
+- **Type:** {self.project_data["type"]}
+- **Technology:** {self.project_data["tech_stack"]}
+- **Status:** In Progress
+
+Please refer to the PRP file for detailed requirements and context.
+"""
+
+        if os.path.exists("CLAUDE.md"):
+            with open("CLAUDE.md", "a", encoding='utf-8') as f:
+                f.write(claude_md_entry)
+            self.print_success("Added PRP reference to CLAUDE.md")
+        else:
+            with open("CLAUDE.md", "w", encoding='utf-8') as f:
+                f.write(f"""# Claude Code Project Context
+
+This file provides context and guidance for Claude Code development on this project.
+
+{claude_md_entry}
+""")
+            self.print_success("Created CLAUDE.md with PRP reference")
+            
+    def run(self):
+        """Main execution method"""
+        try:
+            self.print_header()
+            
+            self.print_info("This advanced tool creates a comprehensive Project Requirements Planning (PRP)")
+            self.print_info("document using AI-enhanced questioning based on your project context.")
+            print()
+            
+            # Gather all information
+            self.gather_basic_info()
+            self.gather_detailed_requirements()
+            self.gather_technical_requirements()
+            self.ask_intelligent_questions()
+            self.gather_dependencies_and_constraints()
+            self.gather_implementation_guidance()
+            self.gather_risk_assessment()
+            self.gather_additional_context()
+            
+            # Generate the PRP file
+            filename = self.generate_prp_file()
+            
+            print()
+            self.print_success("Advanced PRP generation complete! Happy coding with Claude!")
+            return filename
+            
+        except (KeyboardInterrupt, EOFError):
+            print(f"\n{Colors.YELLOW}Process interrupted by user. Exiting...{Colors.NC}")
+            sys.exit(0)
+        except Exception as e:
+            self.print_error(f"An error occurred: {str(e)}")
+            sys.exit(1)
+
+def main():
+    """Main entry point"""
+    if len(sys.argv) > 1 and sys.argv[1] in ['--help', '-h']:
+        print(f"""
+{Colors.BLUE}Advanced Claude Code PRP Generator{Colors.NC}
+
+Usage: /generate-prp-advanced
+
+This intelligent tool creates comprehensive Project Requirements Planning (PRP)
+documents through an AI-enhanced interview process that adapts to your project
+context.
+
+Features:
+  • Automatic project context detection
+  • Technology stack-aware questioning
+  • Intelligent follow-up questions
+  • Comprehensive requirement gathering
+  • Risk assessment and implementation guidance
+  • Automatic CLAUDE.md integration
+  • Optimized format for Claude Code
+
+The tool analyzes your project directory to detect:
+  - Technology stack and frameworks
+  - Existing test infrastructure
+  - CI/CD configurations
+  - Database files and configurations
+  - Package managers and dependencies
+
+Based on this analysis, it asks targeted questions relevant to your specific
+project type and technology stack, ensuring comprehensive requirements capture.
+""")
+        return
+        
+    generator = PRPGenerator()
+    generator.run()
+
+if __name__ == "__main__":
+    main()

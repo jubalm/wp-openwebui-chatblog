@@ -216,134 +216,134 @@ resource "kubernetes_secret" "openwebui_env" {
   }
 }
 
-# WordPress OAuth2 Pipeline deployment - TEMPORARILY DISABLED
-# resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
-#   metadata {
-#     name      = "wordpress-oauth-pipeline"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#     labels = {
-#       app = "wordpress-oauth-pipeline"
-#     }
-#   }
-#
-#   spec {
-#     replicas = 1
-#     selector {
-#       match_labels = {
-#         app = "wordpress-oauth-pipeline"
-#       }
-#     }
-#
-#     template {
-#       metadata {
-#         labels = {
-#           app = "wordpress-oauth-pipeline"
-#         }
-#       }
-#
-#       spec {
-#         container {
-#           name  = "wordpress-oauth-pipeline"
-#           image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
-#           port {
-#             container_port = 9099
-#           }
-#
-#           env_from {
-#             secret_ref {
-#               name = kubernetes_secret.wordpress_oauth_env.metadata[0].name
-#             }
-#           }
-#
-#           volume_mount {
-#             name       = "data"
-#             mount_path = "/app/data"
-#           }
-#
-#           liveness_probe {
-#             http_get {
-#               path = "/health"
-#               port = 9099
-#             }
-#             initial_delay_seconds = 30
-#             period_seconds        = 10
-#           }
-#
-#           readiness_probe {
-#             http_get {
-#               path = "/health"
-#               port = 9099
-#             }
-#             initial_delay_seconds = 5
-#             period_seconds        = 5
-#           }
-#         }
-#
-#         volume {
-#           name = "data"
-#           persistent_volume_claim {
-#             claim_name = kubernetes_persistent_volume_claim.wordpress_oauth_data.metadata[0].name
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+# WordPress OAuth2 Pipeline deployment
+resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
+  metadata {
+    name      = "wordpress-oauth-pipeline"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+    labels = {
+      app = "wordpress-oauth-pipeline"
+    }
+  }
 
-# resource "kubernetes_service" "wordpress_oauth_pipeline" {
-#   metadata {
-#     name      = "wordpress-oauth-pipeline"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-#
-#   spec {
-#     selector = {
-#       app = "wordpress-oauth-pipeline"
-#     }
-#
-#     port {
-#       port        = 9099
-#       target_port = 9099
-#     }
-#
-#     type = "ClusterIP"
-#   }
-# }
+  spec {
+    replicas = 1
+    selector {
+      match_labels = {
+        app = "wordpress-oauth-pipeline"
+      }
+    }
 
-# resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
-#   metadata {
-#     name      = "wordpress-oauth-data"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-#
-#   spec {
-#     access_modes = ["ReadWriteOnce"]
-#     storage_class_name = "ionos-enterprise-hdd"
-#     resources {
-#       requests = {
-#         storage = "1Gi"
-#       }
-#     }
-#   }
-# }
+    template {
+      metadata {
+        labels = {
+          app = "wordpress-oauth-pipeline"
+        }
+      }
 
-# resource "kubernetes_secret" "wordpress_oauth_env" {
-#   metadata {
-#     name      = "wordpress-oauth-env-secrets"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-#   data = {
-#     WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
-#     AUTHENTIK_URL           = "http://authentik.admin-apps.svc.cluster.local"
-#     AUTHENTIK_CLIENT_ID     = var.authentik_client_id
-#     AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
-#   }
-# }
+      spec {
+        container {
+          name  = "wordpress-oauth-pipeline"
+          image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
+          port {
+            container_port = 9099
+          }
 
-# resource "random_password" "wordpress_encryption_key" {
-#   length  = 32
-#   special = false
-# }
+          env_from {
+            secret_ref {
+              name = kubernetes_secret.wordpress_oauth_env.metadata[0].name
+            }
+          }
+
+          volume_mount {
+            name       = "data"
+            mount_path = "/app/data"
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/health"
+              port = 9099
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 10
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/health"
+              port = 9099
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 5
+          }
+        }
+
+        volume {
+          name = "data"
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim.wordpress_oauth_data.metadata[0].name
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "wordpress_oauth_pipeline" {
+  metadata {
+    name      = "wordpress-oauth-pipeline"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "wordpress-oauth-pipeline"
+    }
+
+    port {
+      port        = 9099
+      target_port = 9099
+    }
+
+    type = "ClusterIP"
+  }
+}
+
+resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
+  metadata {
+    name      = "wordpress-oauth-data"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+    storage_class_name = "ionos-enterprise-hdd"
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+  }
+}
+
+resource "kubernetes_secret" "wordpress_oauth_env" {
+  metadata {
+    name      = "wordpress-oauth-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
+    AUTHENTIK_URL           = "http://authentik.admin-apps.svc.cluster.local"
+    AUTHENTIK_CLIENT_ID     = var.authentik_client_id
+    AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
+  }
+}
+
+resource "random_password" "wordpress_encryption_key" {
+  length  = 32
+  special = false
+}
 
 # Ingress for WordPress OAuth2 Pipeline - TEMPORARILY DISABLED
 # resource "kubernetes_ingress_v1" "wordpress_oauth_ingress" {
