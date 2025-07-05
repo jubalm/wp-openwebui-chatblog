@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-oauth-pipeline
+  namespace: admin-apps
+  labels:
+    app: wordpress-oauth-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress-oauth-pipeline
+  template:
+    metadata:
+      labels:
+        app: wordpress-oauth-pipeline
+    spec:
+      imagePullSecrets:
+      - name: ionos-cr-secret
+      containers:
+      - name: wordpress-oauth-pipeline
+        image: wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:425d071
+        ports:
+        - containerPort: 9099
+        envFrom:
+        - secretRef:
+            name: wordpress-oauth-env-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9099
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9099
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: wordpress-oauth-data
