@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy pipeline code
 COPY wordpress_oauth.py .
 COPY wordpress_client.py .
+COPY content_automation.py .
+COPY openwebui_wordpress_pipeline.py .
 
 # Create data directory
 RUN mkdir -p /app/data

@@ -416,6 +416,157 @@ async def test_wordpress_connection(
     else:
         raise HTTPException(status_code=400, detail=result['message'])
 
+# Import content automation
+from content_automation import (
+    content_automation, 
+    CreateWorkflowRequest, 
+    WorkflowResponse,
+    ContentType,
+    WorkflowStatus
+)
+
+# Content Automation Endpoints
+@app.post("/api/content/workflows", response_model=WorkflowResponse)
+async def create_content_workflow(
+    workflow_request: CreateWorkflowRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Create a new content publishing workflow"""
+    workflow_data = workflow_request.dict()
+    workflow_data["user_id"] = current_user["sub"]
+    
+    workflow = await content_automation.create_workflow(workflow_data)
+    
+    # Start the workflow immediately if not scheduled
+    if not workflow.scheduled_publish_time:
+        await content_automation.start_workflow(workflow.id)
+    
+    return WorkflowResponse(
+        id=workflow.id,
+        status=workflow.status,
+        title=workflow.title,
+        content_type=workflow.content_type,
+        wordpress_post_id=workflow.wordpress_post_id,
+        created_at=workflow.created_at,
+        updated_at=workflow.updated_at,
+        completed_at=workflow.completed_at,
+        error_message=workflow.error_message,
+        retry_count=workflow.retry_count
+    )
+
+@app.get("/api/content/workflows", response_model=List[WorkflowResponse])
+async def list_content_workflows(
+    status: Optional[WorkflowStatus] = None,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """List content workflows for the current user"""
+    workflows = await content_automation.list_workflows(current_user["sub"], status)
+    
+    return [
+        WorkflowResponse(
+            id=w.id,
+            status=w.status,
+            title=w.title,
+            content_type=w.content_type,
+            wordpress_post_id=w.wordpress_post_id,
+            created_at=w.created_at,
+            updated_at=w.updated_at,
+            completed_at=w.completed_at,
+            error_message=w.error_message,
+            retry_count=w.retry_count
+        ) for w in workflows
+    ]
+
+@app.get("/api/content/workflows/{workflow_id}", response_model=WorkflowResponse)
+async def get_content_workflow(
+    workflow_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get a specific content workflow"""
+    workflow = await content_automation.get_workflow(workflow_id)
+    
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    if workflow.user_id != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return WorkflowResponse(
+        id=workflow.id,
+        status=workflow.status,
+        title=workflow.title,
+        content_type=workflow.content_type,
+        wordpress_post_id=workflow.wordpress_post_id,
+        created_at=workflow.created_at,
+        updated_at=workflow.updated_at,
+        completed_at=workflow.completed_at,
+        error_message=workflow.error_message,
+        retry_count=workflow.retry_count
+    )
+
+@app.post("/api/content/workflows/{workflow_id}/cancel")
+async def cancel_content_workflow(
+    workflow_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Cancel a content workflow"""
+    workflow = await content_automation.get_workflow(workflow_id)
+    
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    if workflow.user_id != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    success = await content_automation.cancel_workflow(workflow_id)
+    
+    if success:
+        return {"success": True, "message": "Workflow cancelled successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Cannot cancel workflow in current status")
+
+@app.post("/api/content/workflows/{workflow_id}/retry")
+async def retry_content_workflow(
+    workflow_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retry a failed content workflow"""
+    workflow = await content_automation.get_workflow(workflow_id)
+    
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    if workflow.user_id != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if workflow.status != WorkflowStatus.FAILED:
+        raise HTTPException(status_code=400, detail="Only failed workflows can be retried")
+    
+    # Reset workflow for retry
+    workflow.status = WorkflowStatus.PENDING
+    workflow.error_message = None
+    workflow.retry_count = 0
+    workflow.updated_at = datetime.utcnow()
+    
+    # Start the workflow
+    await content_automation.start_workflow(workflow_id)
+    
+    return {"success": True, "message": "Workflow retry initiated"}
+
+@app.get("/api/content/templates")
+async def get_content_templates():
+    """Get available content templates and their configurations"""
+    return {
+        "templates": {
+            content_type.value: {
+                "name": content_type.value.replace('_', ' ').title(),
+                "description": f"Template for {content_type.value.replace('_', ' ')} content",
+                "config": content_automation.content_templates[content_type]
+            }
+            for content_type in ContentType
+        }
+    }
+
 # Main pipeline entry point
 if __name__ == "__main__":
     import uvicorn
