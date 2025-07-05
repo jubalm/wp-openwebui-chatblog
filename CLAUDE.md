@@ -1,5 +1,7 @@
 # IONOS WordPress-OpenWebUI Project - PoC FULLY OPERATIONAL! 🎉
 
+> **🔍 FOR CONTINUATION AGENTS**: Read `SESSION_CHANGES.md` for detailed code changes, validation protocols, and automation integration points from the July 5, 2025 development session.
+
 ## Current Deployment Status (July 5, 2025 - 7:20 PM) - PRD PHASE 2 (CONTENT INTEGRATION) IN PROGRESS ✅
 
 **Cluster**: `354372a8-cdfc-4c4c-814c-37effe9bf8a2` | **LoadBalancer**: `85.215.220.121`
@@ -256,6 +258,30 @@ OAuth2 Integration 🔄 (Ready for Phase 2)
 2. **Test OAuth2 authentication flow** - Frontend browser testing
 3. **Enable content transfer** - OpenWebUI → WordPress content pipeline
 4. **Validate PRD Phase 2 completion** - End-to-end content integration testing
+
+### 📋 DETAILED SESSION CHANGES (July 5, 2025 - 7:20 PM)
+**CRITICAL**: Read `SESSION_CHANGES.md` for complete code changes and automation integration points.
+
+**Key Changes Made This Session**:
+- ✅ **Terraform**: 200+ lines uncommented in `terraform/platform/main.tf` (pipeline deployment enabled)
+- ✅ **Docker**: Fixed `pipelines/Dockerfile` + Python import paths in `wordpress_client.py` and `wordpress_oauth.py`
+- ✅ **Kubernetes**: OpenWebUI OAuth2 secret patched (`OPENID_PROVIDER_URL` fixed)
+- ✅ **Manifests**: Created `pipeline-deployment.yaml`, `pipeline-service.yaml`, `pipeline-pvc.yaml`
+- ✅ **Registry**: Copied `ionos-cr-secret` to admin-apps namespace for image pulls
+
+**Validation Commands Established**:
+```bash
+# SERVICE HEALTH (ALL WORKING)
+curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/  # ✅ HTTP 200
+curl -H "Host: openwebui.local" http://85.215.220.121/api/config  # ✅ Shows "Authentik SSO"
+curl -H "Host: authentik.local" http://85.215.220.121/ -I  # ✅ HTTP 302 redirect
+
+# PIPELINE SERVICE (NEEDS IMPORT FIX)
+kubectl get pods -n admin-apps | grep wordpress-oauth  # Status check
+kubectl logs -n admin-apps deployment/wordpress-oauth-pipeline  # Error: ModuleNotFoundError
+```
+
+**Automation Integration Ready**: See `SESSION_CHANGES.md` for GitHub Actions, Terraform variables, and CI/CD integration requirements.
 
 ## PHASE 2 IMPLEMENTATION STATUS - CONFIGURATION DETAILS
 
