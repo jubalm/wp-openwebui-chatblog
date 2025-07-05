@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: health-check-config
+  namespace: admin-apps
+data:
+  health-check.sh: |
+    #!/bin/bash
+    
+    # Health check script for WordPress-OpenWebUI integration
+    # This script runs periodic health checks and reports status
+    
+    LOADBALANCER_IP="85.215.220.121"
+    HEALTH_STATUS="healthy"
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    
+    # Check WordPress
+    if ! curl -f --max-time 10 -H "Host: wordpress-tenant1.local" \
+         "http://$LOADBALANCER_IP/" > /dev/null 2>&1; then
+        echo "$TIMESTAMP ERROR WordPress service unreachable"
+        HEALTH_STATUS="unhealthy"
+    else
+        echo "$TIMESTAMP INFO WordPress service healthy"
+    fi
+    
+    # Check OpenWebUI
+    if ! curl -f --max-time 10 -H "Host: openwebui.local" \
+         "http://$LOADBALANCER_IP/" > /dev/null 2>&1; then
+        echo "$TIMESTAMP ERROR OpenWebUI service unreachable"
+        HEALTH_STATUS="unhealthy"
+    else
+        echo "$TIMESTAMP INFO OpenWebUI service healthy"
+    fi
+    
+    # Check Authentik
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+        -H "Host: authentik.local" "http://$LOADBALANCER_IP/")
+    if [ "$status_code" != "302" ]; then
+        echo "$TIMESTAMP ERROR Authentik service unhealthy (status: $status_code)"
+        HEALTH_STATUS="unhealthy"
+    else
+        echo "$TIMESTAMP INFO Authentik service healthy"
+    fi
+    
+    # Check OAuth2 integration
+    oauth_providers=$(curl -s --max-time 10 -H "Host: openwebui.local" \
+        "http://$LOADBALANCER_IP/api/config" | jq -r '.oauth.providers | keys | length' 2>/dev/null || echo "0")
+    if [ "$oauth_providers" -eq 0 ]; then
+        echo "$TIMESTAMP WARNING OAuth2 providers not configured"
+        HEALTH_STATUS="degraded"
+    else
+        echo "$TIMESTAMP INFO OAuth2 integration healthy ($oauth_providers providers)"
+    fi
+    
+    echo "$TIMESTAMP STATUS Overall health: $HEALTH_STATUS"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-monitor
+  namespace: admin-apps
+  labels:
+    app: health-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: health-monitor
+  template:
+    metadata:
+      labels:
+        app: health-monitor
+    spec:
+      containers:
+      - name: health-monitor
+        image: curlimages/curl:latest
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            # Install jq
+            apk add --no-cache jq
+            
+            # Run health checks every 60 seconds
+            while true; do
+              /scripts/health-check.sh
+              sleep 60
+            done
+        volumeMounts:
+        - name: health-check-script
+          mountPath: /scripts
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+      volumes:
+      - name: health-check-script
+        configMap:
+          name: health-check-config
+          defaultMode: 0755
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health-monitor
+  namespace: admin-apps
+  labels:
+    app: health-monitor
+spec:
+  selector:
+    app: health-monitor
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,342 @@
+name: Integration Health Tests
+
+on:
+  # Run after successful deployments
+  workflow_run:
+    workflows: ["Unified Terraform Deployment", "Build and Push WordPress and Pipeline Images"]
+    types:
+      - completed
+  # Manual trigger for testing
+  workflow_dispatch:
+  # Scheduled health checks (every 6 hours)
+  schedule:
+    - cron: '0 */6 * * *'
+
+env:
+  CLUSTER_ID: "354372a8-cdfc-4c4c-814c-37effe9bf8a2"
+  LOADBALANCER_IP: "85.215.220.121"
+
+jobs:
+  # ======================================================================================
+  # Infrastructure Health Checks
+  # ======================================================================================
+  infrastructure-tests:
+    name: "Infrastructure Health Validation"
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Get kubeconfig
+        env:
+          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
+        run: |
+          curl -X GET \
+            "https://api.ionos.com/cloudapi/v6/k8s/clusters/${{ env.CLUSTER_ID }}/kubeconfig" \
+            -H "Authorization: Bearer $IONOS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -o kubeconfig.yaml
+
+      - name: Test cluster connectivity
+        run: |
+          export KUBECONFIG=./kubeconfig.yaml
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Validate all pods are running
+        run: |
+          export KUBECONFIG=./kubeconfig.yaml
+          echo "=== Checking pod status across all namespaces ==="
+          kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+          
+          # Fail if any pods are not running (except completed jobs)
+          FAILED_PODS=$(kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded --no-headers | wc -l)
+          if [ "$FAILED_PODS" -gt 0 ]; then
+            echo "❌ Found $FAILED_PODS failed pods"
+            kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+            exit 1
+          fi
+          echo "✅ All pods are healthy"
+
+      - name: Check LoadBalancer status
+        run: |
+          echo "=== Testing LoadBalancer connectivity ==="
+          curl -I http://${{ env.LOADBALANCER_IP }}/ --max-time 10 || {
+            echo "❌ LoadBalancer health check failed"
+            exit 1
+          }
+          echo "✅ LoadBalancer is accessible"
+
+  # ======================================================================================
+  # Service Integration Tests
+  # ======================================================================================
+  service-integration-tests:
+    name: "Service Integration Validation"
+    runs-on: ubuntu-latest
+    needs: infrastructure-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test WordPress service
+        run: |
+          echo "=== Testing WordPress REST API ==="
+          
+          # Test WordPress homepage
+          curl -f -H "Host: wordpress-tenant1.local" \
+            http://${{ env.LOADBALANCER_IP }}/ \
+            --max-time 10 || {
+            echo "❌ WordPress homepage failed"
+            exit 1
+          }
+          
+          # Test WordPress REST API
+          POSTS_COUNT=$(curl -s -H "Host: wordpress-tenant1.local" \
+            http://${{ env.LOADBALANCER_IP }}/wp-json/wp/v2/posts | \
+            jq length)
+          
+          if [ "$POSTS_COUNT" -lt 1 ]; then
+            echo "❌ WordPress REST API returned no posts"
+            exit 1
+          fi
+          
+          echo "✅ WordPress service healthy ($POSTS_COUNT posts available)"
+
+      - name: Test OpenWebUI service
+        run: |
+          echo "=== Testing OpenWebUI OAuth2 Integration ==="
+          
+          # Test OpenWebUI homepage
+          curl -f -H "Host: openwebui.local" \
+            http://${{ env.LOADBALANCER_IP }}/ \
+            --max-time 10 || {
+            echo "❌ OpenWebUI homepage failed"
+            exit 1
+          }
+          
+          # Test OAuth2 provider configuration
+          OAUTH_PROVIDERS=$(curl -s -H "Host: openwebui.local" \
+            http://${{ env.LOADBALANCER_IP }}/api/config | \
+            jq -r '.oauth.providers | keys | length')
+          
+          if [ "$OAUTH_PROVIDERS" -lt 1 ]; then
+            echo "❌ OpenWebUI OAuth2 providers not configured"
+            exit 1
+          fi
+          
+          echo "✅ OpenWebUI OAuth2 integration healthy ($OAUTH_PROVIDERS providers)"
+
+      - name: Test Authentik SSO service
+        run: |
+          echo "=== Testing Authentik SSO Service ==="
+          
+          # Test Authentik endpoint (should return 302 redirect for auth)
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Host: authentik.local" \
+            http://${{ env.LOADBALANCER_IP }}/ \
+            --max-time 10)
+          
+          if [ "$STATUS_CODE" != "302" ]; then
+            echo "❌ Authentik SSO not responding correctly (got $STATUS_CODE, expected 302)"
+            exit 1
+          fi
+          
+          echo "✅ Authentik SSO service healthy"
+
+      - name: Test Pipeline service
+        run: |
+          echo "=== Testing WordPress OAuth2 Pipeline Service ==="
+          
+          # Get kubeconfig for port-forwarding
+          curl -X GET \
+            "https://api.ionos.com/cloudapi/v6/k8s/clusters/${{ env.CLUSTER_ID }}/kubeconfig" \
+            -H "Authorization: Bearer ${{ secrets.IONOS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -o kubeconfig.yaml
+          
+          export KUBECONFIG=./kubeconfig.yaml
+          
+          # Test pipeline health via port-forward
+          kubectl port-forward -n admin-apps svc/wordpress-oauth-pipeline 9099:9099 &
+          PORT_FORWARD_PID=$!
+          
+          # Wait for port-forward to be ready
+          sleep 5
+          
+          # Test health endpoint
+          HEALTH_STATUS=$(curl -s http://localhost:9099/health | jq -r '.status')
+          
+          # Kill port-forward
+          kill $PORT_FORWARD_PID || true
+          
+          if [ "$HEALTH_STATUS" != "healthy" ]; then
+            echo "❌ Pipeline service health check failed"
+            exit 1
+          fi
+          
+          echo "✅ Pipeline service healthy"
+
+  # ======================================================================================
+  # OAuth2 Flow Integration Test
+  # ======================================================================================
+  oauth2-integration-test:
+    name: "OAuth2 Flow Integration Test"
+    runs-on: ubuntu-latest
+    needs: service-integration-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test OIDC Discovery
+        run: |
+          echo "=== Testing OIDC Discovery Integration ==="
+          
+          # Test Authentik OIDC discovery endpoint
+          ISSUER=$(curl -s -H "Host: authentik.local" \
+            http://${{ env.LOADBALANCER_IP }}/application/o/openwebui/.well-known/openid-configuration | \
+            jq -r '.issuer')
+          
+          if [ "$ISSUER" == "null" ] || [ -z "$ISSUER" ]; then
+            echo "❌ OIDC discovery endpoint failed"
+            exit 1
+          fi
+          
+          echo "✅ OIDC discovery working (issuer: $ISSUER)"
+
+      - name: Test OAuth2 redirect flow
+        run: |
+          echo "=== Testing OAuth2 Redirect Flow ==="
+          
+          # Test OAuth2 login endpoint (should return 302 with location header)
+          LOCATION_HEADER=$(curl -s -I -H "Host: openwebui.local" \
+            http://${{ env.LOADBALANCER_IP }}/oauth/oidc/login | \
+            grep -i "location:" | head -1)
+          
+          if [ -z "$LOCATION_HEADER" ]; then
+            echo "❌ OAuth2 login redirect not working"
+            exit 1
+          fi
+          
+          echo "✅ OAuth2 redirect flow working"
+          echo "Redirect: $LOCATION_HEADER"
+
+  # ======================================================================================
+  # Performance & Security Tests
+  # ======================================================================================
+  performance-tests:
+    name: "Performance & Security Validation"
+    runs-on: ubuntu-latest
+    needs: oauth2-integration-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test service response times
+        run: |
+          echo "=== Testing Service Response Times ==="
+          
+          # Test WordPress response time
+          WP_TIME=$(curl -o /dev/null -s -w "%{time_total}" \
+            -H "Host: wordpress-tenant1.local" \
+            http://${{ env.LOADBALANCER_IP }}/)
+          
+          # Test OpenWebUI response time  
+          OWU_TIME=$(curl -o /dev/null -s -w "%{time_total}" \
+            -H "Host: openwebui.local" \
+            http://${{ env.LOADBALANCER_IP }}/)
+          
+          echo "WordPress response time: ${WP_TIME}s"
+          echo "OpenWebUI response time: ${OWU_TIME}s"
+          
+          # Fail if any service takes longer than 10 seconds
+          if (( $(echo "$WP_TIME > 10.0" | bc -l) )); then
+            echo "❌ WordPress response time too slow"
+            exit 1
+          fi
+          
+          if (( $(echo "$OWU_TIME > 10.0" | bc -l) )); then
+            echo "❌ OpenWebUI response time too slow"
+            exit 1
+          fi
+          
+          echo "✅ All services responding within acceptable time"
+
+      - name: Security headers check
+        run: |
+          echo "=== Testing Security Headers ==="
+          
+          # Check for basic security headers on OpenWebUI
+          HEADERS=$(curl -s -I -H "Host: openwebui.local" \
+            http://${{ env.LOADBALANCER_IP }}/)
+          
+          echo "OpenWebUI Headers:"
+          echo "$HEADERS"
+          
+          # This is informational - not failing on missing headers for now
+          echo "✅ Security headers check completed"
+
+  # ======================================================================================
+  # Integration Test Results Summary
+  # ======================================================================================
+  test-summary:
+    name: "Integration Test Summary"
+    runs-on: ubuntu-latest
+    needs: [infrastructure-tests, service-integration-tests, oauth2-integration-test, performance-tests]
+    if: always()
+    steps:
+      - name: Generate test summary
+        run: |
+          echo "# 🧪 Integration Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.infrastructure-tests.result }}" == "success" ]; then
+            echo "✅ **Infrastructure Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Infrastructure Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.service-integration-tests.result }}" == "success" ]; then
+            echo "✅ **Service Integration Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Service Integration Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.oauth2-integration-test.result }}" == "success" ]; then
+            echo "✅ **OAuth2 Integration Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **OAuth2 Integration Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.performance-tests.result }}" == "success" ]; then
+            echo "✅ **Performance Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Performance Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Service Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **LoadBalancer**: http://${{ env.LOADBALANCER_IP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **WordPress**: http://${{ env.LOADBALANCER_IP }} (Host: wordpress-tenant1.local)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OpenWebUI**: http://${{ env.LOADBALANCER_IP }} (Host: openwebui.local)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Authentik**: http://${{ env.LOADBALANCER_IP }} (Host: authentik.local)" >> $GITHUB_STEP_SUMMARY
+          
+          echo "📊 **Test Run**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail workflow if any tests failed
+        if: needs.infrastructure-tests.result != 'success' || needs.service-integration-tests.result != 'success' || needs.oauth2-integration-test.result != 'success' || needs.performance-tests.result != 'success'
+        run: |
+          echo "❌ One or more integration tests failed"
+          exit 1
+
+      - name: Success notification
+        if: needs.infrastructure-tests.result == 'success' && needs.service-integration-tests.result == 'success' && needs.oauth2-integration-test.result == 'success' && needs.performance-tests.result == 'success'
+        run: |
+          echo "🎉 All integration tests passed successfully!"
+          echo "WordPress-OpenWebUI integration is healthy and operational."
