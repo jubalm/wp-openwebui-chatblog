@@ -11,7 +11,7 @@ import httpx
 import base64
 from urllib.parse import urljoin
 
-from wordpress_oauth import pipeline as oauth_pipeline
+# Import will be resolved at runtime to avoid circular import
 
 
 class WordPressAPIClient:
@@ -23,6 +23,8 @@ class WordPressAPIClient:
     
     async def get_credentials(self, user_id: str, connection_id: str) -> Optional[Dict[str, Any]]:
         """Get WordPress credentials for a user connection"""
+        # Import at runtime to avoid circular import
+        from wordpress_oauth import pipeline as oauth_pipeline
         return await oauth_pipeline.get_wordpress_credentials(user_id, connection_id)
     
     async def make_request(self, method: str, endpoint: str, credentials: Dict[str, Any], data: Optional[Dict] = None) -> Dict[str, Any]:

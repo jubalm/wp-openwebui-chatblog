@@ -325,6 +325,10 @@ async def health_check():
 # Required OpenWebUI Pipeline methods
 async def on_startup():
     """Called when the pipeline starts"""
+    global wordpress_client
+    # Import here to avoid circular imports
+    from wordpress_client import WordPressAPIClient
+    wordpress_client = WordPressAPIClient()
     pipeline.logger.info(f"Starting {pipeline.name} v{pipeline.version}")
     return pipeline
 
@@ -335,8 +339,8 @@ async def on_shutdown():
 
 
 # Import WordPress API client  
-from wordpress_client import WordPressAPIClient
-wordpress_client = WordPressAPIClient()
+# Note: Import moved here to avoid circular import issues
+wordpress_client = None
 
 # Add WordPress API endpoints
 @app.get("/api/wordpress/posts")
