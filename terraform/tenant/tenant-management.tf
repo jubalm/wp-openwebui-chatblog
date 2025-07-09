@@ -39,12 +39,6 @@ resource "ionoscloud_mariadb_cluster" "mariadb" {
   lifecycle {
     prevent_destroy = true
   }
-
-  tags = {
-    "tenant"     = each.key
-    "tier"       = each.value.tier
-    "managed-by" = "terraform"
-  }
 }
 
 # Create tenant namespaces
