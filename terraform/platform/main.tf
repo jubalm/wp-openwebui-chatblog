@@ -222,7 +222,7 @@ resource "kubernetes_secret" "openwebui_env" {
   }
   data = {
     OPENAI_API_KEY      = var.openai_api_key
-    OPENAI_API_BASE_URL = "https://api.ionos.com/llm/v1"
+    OPENAI_API_BASE_URL = "https://openai.inference.de-txl.ionos.com/v1"
     
     # OAuth2 Configuration for Authentik SSO
     WEBUI_URL               = "http://openwebui.local"

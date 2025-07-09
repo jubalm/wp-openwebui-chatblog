@@ -1,7 +1,7 @@
 # Infrastructure Status
 
-> **Last Updated**: July 8, 2025  
-> **Status**: FULLY OPERATIONAL
+> **Last Updated**: July 10, 2025  
+> **Status**: FULLY OPERATIONAL - UPGRADED INFRASTRUCTURE
 
 ## Current Infrastructure Details
 
@@ -36,6 +36,12 @@
   - OpenWebUI data: 10Gi
   - Pipeline data: 1Gi
 
+### AI Integration
+- **AI Provider**: IONOS OpenAI API
+- **Endpoint**: `https://openai.inference.de-txl.ionos.com/v1`
+- **Integration**: OpenWebUI configured for IONOS AI service
+- **Status**: ✅ Operational (Ollama removed for better resource efficiency)
+
 ## Architecture Diagram
 ```
 IONOS Cloud Infrastructure ✅
@@ -53,14 +59,16 @@ Platform Services ✅
 Application Layer ✅  
 ├── WordPress (tenant1) ✅
 ├── OpenWebUI ✅
+├── IONOS AI Integration ✅
 └── Database Connections ✅
 ```
 
 ## Resource Utilization
-- **Cluster Nodes**: 3 nodes (m4.large equivalent)
-- **Total CPU**: 6 vCPUs available
-- **Total Memory**: 12GB RAM available
-- **Current Usage**: ~40% CPU, ~60% Memory
+- **Cluster Nodes**: 3 nodes (4 cores, 8GB RAM, 100GB SSD each)
+- **Total CPU**: 12 vCPUs available
+- **Total Memory**: 24GB RAM available
+- **Total Storage**: 300GB SSD available
+- **Current Usage**: ~15% CPU, ~20% Memory, ~30% Storage
 
 ## High Availability Configuration
 - **Database Clusters**: Managed HA by IONOS

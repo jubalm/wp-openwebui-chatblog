@@ -1,8 +1,8 @@
 # IONOS WordPress & OpenWebUI Integration Platform
 
-> **Status**: ✅ FULLY OPERATIONAL | **Version**: 2.0 | **Last Updated**: July 8, 2025
+> **Status**: ✅ FULLY OPERATIONAL | **Version**: 2.1 | **Last Updated**: July 10, 2025
 
-A production-ready, multi-tenant platform that seamlessly integrates WordPress and OpenWebUI with centralized SSO authentication, enabling AI-powered content creation and management workflows on IONOS Cloud infrastructure.
+A production-ready, multi-tenant platform that seamlessly integrates WordPress and OpenWebUI with centralized SSO authentication, enabling AI-powered content creation and management workflows on IONOS Cloud infrastructure. Now powered by IONOS AI services for enhanced performance and scalability.
 
 ## 🚀 Quick Start
 
