@@ -35,7 +35,7 @@ Platform Services ✅
 
 Application Layer ✅  
 ├── WordPress (multi-tenant ready) ✅
-├── OpenWebUI (with Ollama) ✅
+├── OpenWebUI (with IONOS OpenAI API) ✅
 └── Content Automation Pipeline ✅
 ```
 
@@ -69,7 +69,7 @@ Application Layer ✅
 
 ### FR4: OpenWebUI AI Platform ✅
 **Status**: IMPLEMENTED
-- OpenWebUI with Ollama integration
+- OpenWebUI with IONOS OpenAI API integration
 - OAuth2 authentication with Authentik
 - Pipeline service for content processing
 - API-based content transfer
