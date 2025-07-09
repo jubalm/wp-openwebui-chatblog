@@ -213,6 +213,16 @@ resource "kubernetes_secret" "openwebui_env" {
   data = {
     OPENAI_API_KEY      = var.openai_api_key
     OPENAI_API_BASE_URL = "https://api.ionos.com/llm/v1"
+    
+    # OAuth2 Configuration for Authentik SSO
+    WEBUI_URL               = "http://openwebui.local"
+    ENABLE_OAUTH_SIGNUP     = "true"
+    OAUTH_CLIENT_ID         = "openwebui-client"
+    OAUTH_CLIENT_SECRET     = "openwebui-secret-2025"
+    OPENID_PROVIDER_URL     = "http://authentik.local/application/o/openwebui/.well-known/openid-configuration"
+    OAUTH_PROVIDER_NAME     = "Authentik SSO"
+    OAUTH_SCOPES           = "openid email profile"
+    ENABLE_LOGIN_FORM      = "true"
   }
 }
 
