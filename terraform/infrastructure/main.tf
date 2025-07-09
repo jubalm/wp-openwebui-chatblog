@@ -79,18 +79,22 @@ resource "ionoscloud_k8s_cluster" "mks" {
   }
 }
 
-resource "ionoscloud_k8s_node_pool" "mks_pool" {
+resource "ionoscloud_k8s_node_pool" "mks_pool_v2" {
   k8s_cluster_id    = ionoscloud_k8s_cluster.mks.id
-  name              = "mks-node-pool"
-  node_count        = 2
+  name              = "mks-node-pool-v2"
+  node_count        = 3                    # Scaled to 3 nodes for HA
   cpu_family        = "INTEL_SIERRAFOREST"
-  ram_size          = 4096
+  ram_size          = 8192                 # Increased to 8GB for better performance
   availability_zone = "AUTO"
   datacenter_id     = ionoscloud_datacenter.main.id
   k8s_version       = var.k8s_version
-  cores_count       = 2
+  cores_count       = 4                    # 4 cores per node
   storage_type      = "SSD"
-  storage_size      = 20
+  storage_size      = 100                  # Increased to 100GB to resolve disk pressure
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   lans {
     id   = ionoscloud_lan.db_lan.id
