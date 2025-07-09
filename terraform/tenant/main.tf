@@ -210,7 +210,7 @@ resource "helm_release" "wordpress" {
       }
       authentik = {
         enabled = true
-        url = "http://authentik.admin-apps.svc.cluster.local:9000"
+        url = "http://authentik.local"
         clientId = "wordpress-${each.key}"
         clientSecret = "a-secure-secret" # This should be a secret
       }

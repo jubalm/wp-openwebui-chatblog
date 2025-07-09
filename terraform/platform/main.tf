@@ -334,7 +334,7 @@ resource "kubernetes_secret" "wordpress_oauth_env" {
   }
   data = {
     WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
-    AUTHENTIK_URL           = "http://authentik.admin-apps.svc.cluster.local"
+    AUTHENTIK_URL           = "http://authentik.local"
     AUTHENTIK_CLIENT_ID     = var.authentik_client_id
     AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
   }

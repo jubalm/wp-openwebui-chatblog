@@ -108,6 +108,6 @@ database:
 # Authentik OIDC configuration
 authentik:
   enabled: false
-  url: "http://authentik.admin-apps.svc.cluster.local:9000"
+  url: "http://authentik.local"
   clientId: "wordpress"
   clientSecret: "" # This should be populated from a secret
