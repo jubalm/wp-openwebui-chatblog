@@ -197,6 +197,16 @@ resource "kubernetes_secret" "authentik_env" {
     namespace = kubernetes_namespace.admin_apps.metadata[0].name
   }
   data = {
+    # Authentik requires specific environment variable names
+    AUTHENTIK_SECRET_KEY              = random_password.authentik_secret_key.result
+    AUTHENTIK_POSTGRESQL__HOST        = ionoscloud_pg_cluster.postgres.dns_name
+    AUTHENTIK_POSTGRESQL__USER        = var.pg_username
+    AUTHENTIK_POSTGRESQL__PASSWORD    = var.pg_password
+    AUTHENTIK_POSTGRESQL__NAME        = ionoscloud_pg_database.authentik.name
+    AUTHENTIK_REDIS__HOST            = "authentik-new-redis-master.admin-apps.svc.cluster.local"
+    AUTHENTIK_REDIS__PORT            = "6379"
+    
+    # Legacy keys for backward compatibility during transition
     secret_key        = random_password.authentik_secret_key.result
     postgres_host     = ionoscloud_pg_cluster.postgres.dns_name
     postgres_user     = var.pg_username
