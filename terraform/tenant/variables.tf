@@ -214,7 +214,7 @@ variable "tenant_management" {
 # Authentik OAuth2 configuration
 variable "authentik_config" {
   type = object({
-    server_url    = optional(string, "http://authentik.admin-apps.svc.cluster.local:9000")
+    server_url    = optional(string, "http://authentik.local")
     admin_token   = optional(string, "")
     auto_create_apps = optional(bool, true)
   })
