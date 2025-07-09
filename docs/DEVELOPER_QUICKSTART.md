@@ -245,3 +245,39 @@ alias klf='kubectl logs -f'
 alias kex='kubectl exec -it'
 alias kpf='kubectl port-forward'
 ```
+
+## Management Scripts
+
+### Tenant Management
+Use the tenant management script for multi-tenant operations:
+```bash
+# List all tenants
+./scripts/tenant-management.sh list
+
+# Create a new tenant
+./scripts/tenant-management.sh create demo-company 'Demo Company' admin@demo.com pro
+
+# Scale a tenant
+./scripts/tenant-management.sh scale demo-company enterprise
+
+# Test tenant health
+./scripts/tenant-management.sh test demo-company
+```
+
+### Testing Scripts
+Run comprehensive tests with the test scripts:
+```bash
+# Full integration test
+./tests/scripts/test-integration.sh
+
+# SSO validation
+./tests/scripts/test-sso-integration.sh
+
+# Content automation test
+./tests/scripts/test-content-automation.sh
+
+# Interactive demo
+./tests/scripts/demo-tenant-system.sh
+```
+
+See [Scripts Documentation](../scripts/README.md) for complete details.

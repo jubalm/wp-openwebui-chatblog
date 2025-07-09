@@ -17,6 +17,12 @@ kubectl get pods -A
 # Test services
 curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/
 curl -H "Host: openwebui.local" http://85.215.220.121/
+
+# Run integration tests
+./tests/scripts/test-integration.sh
+
+# Manage tenants
+./scripts/tenant-management.sh list
 ```
 
 ## ✨ Key Features
@@ -119,6 +125,34 @@ Authentik admin recovery token:
 
 2. **OAuth2 Frontend**: SSO button not visible in OpenWebUI
    - Backend configured, frontend integration pending
+
+## 🛠️ Platform Management
+
+### Multi-Tenant Operations
+```bash
+# Create a new tenant
+./scripts/tenant-management.sh create my-company 'My Company' admin@mycompany.com pro
+
+# Scale tenant resources
+./scripts/tenant-management.sh scale my-company enterprise
+
+# Test tenant health
+./scripts/tenant-management.sh test my-company
+```
+
+### Testing & Validation
+```bash
+# Run full integration tests
+./tests/scripts/test-integration.sh
+
+# Test SSO integration
+./tests/scripts/test-sso-integration.sh
+
+# Run interactive demo
+./tests/scripts/demo-tenant-system.sh
+```
+
+See [Scripts Documentation](scripts/README.md) for complete management capabilities.
 
 ## 🤝 Contributing
 

@@ -12,6 +12,16 @@ wp-openwebui/
 ├── CLAUDE.md                          # AI context file with references
 ├── SESSION_CHANGES.md                 # Development session changes log
 ├── DOCUMENTATION_ALIGNMENT_PLAN.md    # This documentation reorganization plan
+├── scripts/
+│   ├── README.md                      # Scripts documentation
+│   ├── tenant-management.sh           # Multi-tenant management
+│   └── build-and-deploy-local.sh      # Local development builds
+├── tests/scripts/
+│   ├── README.md                      # Test scripts documentation
+│   ├── test-integration.sh            # Platform integration tests
+│   ├── test-sso-integration.sh        # SSO/OAuth2 validation
+│   ├── test-content-automation.sh     # Content pipeline tests
+│   └── demo-tenant-system.sh          # Interactive demo
 └── docs/
     ├── 1.PRODUCT_REQUIREMENTS.md      # Original PoC requirements (historical)
     ├── 3.TECHNICAL_OVERVIEW.md        # Technical architecture details
@@ -50,6 +60,8 @@ wp-openwebui/
 - **Quick Commands**: `docs/DEVELOPER_QUICKSTART.md`
 - **Essential Commands**: `CLAUDE.md#essential-quick-commands`
 - **Troubleshooting**: `docs/DEVELOPER_QUICKSTART.md#troubleshooting`
+- **Management Scripts**: `scripts/README.md`
+- **Test Scripts**: `tests/scripts/README.md`
 
 ### Integration & Features
 - **WordPress-OpenWebUI Integration**: `docs/5.WORDPRESS_OPENWEBUI_INTEGRATION_README.md`
@@ -108,6 +120,8 @@ wp-openwebui/
 | Understand architecture | `ARCHITECTURE_STATUS.md` |
 | View requirements | `PRP.md` |
 | Troubleshoot issues | `DEVELOPER_QUICKSTART.md#troubleshooting` |
+| Manage tenants | `scripts/tenant-management.sh` |
+| Run tests | `tests/scripts/test-integration.sh` |
 
 ### Key Configuration Values
 
