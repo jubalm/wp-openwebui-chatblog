@@ -6,6 +6,7 @@
 ## Prerequisites
 - IONOS CLI (`ionosctl`) installed
 - `kubectl` installed
+- `k9s` installed (highly recommended for cluster monitoring)
 - Docker installed (for local development)
 - GitHub CLI (`gh`) installed (optional)
 
@@ -23,7 +24,118 @@ export KUBECONFIG=./kubeconfig.yaml
 kubectl get nodes
 ```
 
-### 2. Essential Commands
+### 2. Install k9s (Recommended)
+k9s provides a powerful terminal-based UI for managing Kubernetes clusters.
+
+#### Installation
+```bash
+# macOS (via Homebrew)
+brew install k9s
+
+# Linux (via Snap)
+sudo snap install k9s
+
+# Windows (via Scoop)
+scoop install k9s
+
+# Or download binary from GitHub releases
+# https://github.com/derailed/k9s/releases
+```
+
+#### Launch k9s
+```bash
+# Start k9s with your kubeconfig
+export KUBECONFIG=./kubeconfig.yaml
+k9s
+```
+
+## Monitoring with k9s
+
+### k9s Navigation Basics
+- `:pods` - View all pods
+- `:svc` - View services
+- `:ing` - View ingresses
+- `:ns` - View namespaces
+- `:no` - View nodes
+- `/` - Filter resources
+- `Enter` - Describe resource
+- `l` - View logs
+- `s` - Shell into pod
+- `?` - Help menu
+
+### Platform-Specific Monitoring
+
+#### Monitor Platform Services
+```bash
+# In k9s, navigate to admin-apps namespace
+:ns
+# Select admin-apps and press Enter
+# Then view pods
+:pods
+```
+
+Key services to monitor in `admin-apps`:
+- `authentik-server` - SSO authentication
+- `authentik-worker` - Background tasks
+- `open-webui` - AI chat interface
+- `wordpress-oauth-pipeline` - Content automation
+
+#### Monitor WordPress Tenants
+```bash
+# Filter namespaces containing "wordpress"
+:ns
+/wordpress
+```
+
+For each tenant namespace:
+- `wordpress-{tenant}` - WordPress instance
+- `mariadb-{tenant}` - Database (if deployed in cluster)
+
+#### Quick Health Checks in k9s
+1. **Press `:pods`** - Check for any pods not in "Running" state
+2. **Press `:svc`** - Verify services have endpoints
+3. **Press `:ing`** - Check ingress rules and LoadBalancer status
+4. **Press `:events`** - View recent cluster events
+
+#### Useful k9s Shortcuts for This Platform
+- `:pods -n admin-apps` - Direct to admin-apps pods
+- `:logs -n admin-apps authentik-server` - View Authentik logs
+- `:describe pod/open-webui` - Get pod details
+- `:top pods` - View resource usage
+
+### k9s Quick Reference for WordPress-OpenWebUI Platform
+
+#### Essential Views
+| Command | Description |
+|---------|-------------|
+| `:pods` | View all pods across namespaces |
+| `:pods -n admin-apps` | Focus on platform services |
+| `:svc` | Check service endpoints |
+| `:ing` | Monitor ingress rules |
+| `:events` | Recent cluster events |
+| `:ns` | Switch between namespaces |
+
+#### Key Actions
+| Key | Action |
+|-----|--------|
+| `Enter` | Describe selected resource |
+| `l` | View logs (live tail) |
+| `s` | Shell into pod |
+| `d` | Delete resource |
+| `y` | View YAML |
+| `e` | Edit resource |
+| `/` | Filter resources |
+| `?` | Show help |
+
+#### Platform Monitoring Workflow
+1. Start: `k9s`
+2. Check overall health: `:pods`
+3. Monitor platform: `:pods -n admin-apps`
+4. Check specific tenant: `:ns` → select tenant → `:pods`
+5. View logs: select pod → `l`
+6. Check connectivity: `:svc` → `:ing`
+
+### 3. Essential Commands
 
 #### Service Health Checks
 ```bash
@@ -152,7 +264,44 @@ curl -H "Host: wordpress-tenant1.local" http://85.215.220.121:9099/health
 
 ## Troubleshooting
 
-### Common Issues
+### k9s-Based Troubleshooting (Recommended)
+
+#### Pod Issues
+1. **Press `:pods`** in k9s
+2. **Look for pods** not in "Running/Completed" state
+3. **Press `l`** on problematic pod to view logs
+4. **Press `d`** to describe pod and see events
+5. **Press `s`** to shell into running pod if needed
+
+#### Service Connectivity Issues
+1. **Press `:svc`** to view services
+2. **Press `Enter`** on service to see endpoints
+3. **Press `:ing`** to check ingress configuration
+4. **Press `:events`** to see recent cluster events
+
+#### Quick Debugging Workflow in k9s
+```bash
+# 1. Start k9s
+k9s
+
+# 2. Check overall cluster health
+:pods
+# Look for any non-Running pods
+
+# 3. Check specific namespace
+:ns
+# Navigate to problematic namespace
+
+# 4. Investigate pod logs
+:pods
+# Select pod, press 'l' for logs
+
+# 5. Check events
+:events
+# Sort by timestamp to see recent issues
+```
+
+### Traditional CLI Troubleshooting
 
 #### Pod CrashLoopBackOff
 ```bash
@@ -183,6 +332,29 @@ kubectl get secret ionos-cr-secret -n <namespace>
 # Verify registry access
 docker pull wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/<image>
 ```
+
+### Platform-Specific Troubleshooting
+
+#### WordPress Tenant Issues
+**Using k9s:**
+1. `:ns` → filter by tenant name
+2. `:pods` → check WordPress pod status
+3. `l` → view WordPress logs
+4. `:svc` → verify service endpoints
+
+#### Authentik SSO Issues
+**Using k9s:**
+1. `:pods -n admin-apps`
+2. Check `authentik-server` and `authentik-worker` status
+3. `l` on authentik-server for authentication logs
+4. `:ing` to verify ingress configuration
+
+#### Content Pipeline Issues
+**Using k9s:**
+1. `:pods -n admin-apps`
+2. Find `wordpress-oauth-pipeline` pod
+3. `l` for pipeline logs
+4. `s` to shell in and test Python imports
 
 ## Local Development
 
@@ -238,10 +410,54 @@ gh run view <run-id> --log
 Add to your `.bashrc` or `.zshrc`:
 
 ```bash
+# Kubernetes CLI shortcuts
 alias k='kubectl'
 alias kgp='kubectl get pods'
 alias kgpa='kubectl get pods -A'
 alias klf='kubectl logs -f'
 alias kex='kubectl exec -it'
 alias kpf='kubectl port-forward'
+
+# k9s with kubeconfig
+alias k9s='KUBECONFIG=./kubeconfig.yaml k9s'
+
+# Quick access to platform namespaces
+alias k9s-admin='k9s -n admin-apps'
+alias k9s-tenant='k9s --all-namespaces | grep wordpress'
 ```
+
+## Management Scripts
+
+### Tenant Management
+Use the tenant management script for multi-tenant operations:
+```bash
+# List all tenants
+./scripts/tenant-management.sh list
+
+# Create a new tenant
+./scripts/tenant-management.sh create demo-company 'Demo Company' admin@demo.com pro
+
+# Scale a tenant
+./scripts/tenant-management.sh scale demo-company enterprise
+
+# Test tenant health
+./scripts/tenant-management.sh test demo-company
+```
+
+### Testing Scripts
+Run comprehensive tests with the test scripts:
+```bash
+# Full integration test
+./tests/scripts/test-integration.sh
+
+# SSO validation
+./tests/scripts/test-sso-integration.sh
+
+# Content automation test
+./tests/scripts/test-content-automation.sh
+
+# Interactive demo
+./tests/scripts/demo-tenant-system.sh
+```
+
+See [Scripts Documentation](../scripts/README.md) for complete details.
