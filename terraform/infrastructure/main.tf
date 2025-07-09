@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.9.0, <= 1.10.0"
+  required_version = ">= 1.9.0, <= 1.12.2"
   required_providers {
     ionoscloud = {
       source  = "ionos-cloud/ionoscloud"
@@ -82,15 +82,15 @@ resource "ionoscloud_k8s_cluster" "mks" {
 resource "ionoscloud_k8s_node_pool" "mks_pool" {
   k8s_cluster_id    = ionoscloud_k8s_cluster.mks.id
   name              = "mks-node-pool"
-  node_count        = 3                    # Increased from 2 to 3 for better HA
+  node_count        = 2
   cpu_family        = "INTEL_SIERRAFOREST"
-  ram_size          = 8192                 # Increased from 4096 to 8192 (8GB)
+  ram_size          = 4096
   availability_zone = "AUTO"
   datacenter_id     = ionoscloud_datacenter.main.id
   k8s_version       = var.k8s_version
-  cores_count       = 4                    # Increased from 2 to 4 cores
+  cores_count       = 2
   storage_type      = "SSD"
-  storage_size      = 100                  # Increased from 20 to 100GB (resolves disk pressure)
+  storage_size      = 20
 
   lans {
     id   = ionoscloud_lan.db_lan.id
