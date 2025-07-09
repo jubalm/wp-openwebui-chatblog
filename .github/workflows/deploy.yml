@@ -203,3 +203,79 @@ jobs:
         run: terraform -chdir=terraform/tenant init
       - name: Terraform Apply
         run: terraform -chdir=terraform/tenant apply -auto-approve tfplan
+
+  # ======================================================================================
+  # 4. Post-Deployment Steps
+  # ======================================================================================
+  post-deployment:
+    name: '4. Post-Deployment Steps'
+    runs-on: ubuntu-latest
+    needs: apply-tenant
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Get kubeconfig
+        env:
+          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
+        run: |
+          curl -X GET \
+            "https://api.ionos.com/cloudapi/v6/k8s/clusters/354372a8-cdfc-4c4c-814c-37effe9bf8a2/kubeconfig" \
+            -H "Authorization: Bearer $IONOS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -o kubeconfig.yaml
+
+      - name: Update pipeline service ConfigMap
+        run: |
+          export KUBECONFIG=./kubeconfig.yaml
+          kubectl delete configmap pipeline-code -n admin-apps --ignore-not-found=true
+          kubectl create configmap pipeline-code --from-file=pipelines/ -n admin-apps
+
+      - name: Restart pipeline service to pick up ConfigMap changes
+        run: |
+          export KUBECONFIG=./kubeconfig.yaml
+          kubectl rollout restart deployment/wordpress-oauth-pipeline -n admin-apps
+          kubectl rollout status deployment/wordpress-oauth-pipeline -n admin-apps --timeout=300s
+
+      - name: Verify deployment health
+        run: |
+          export KUBECONFIG=./kubeconfig.yaml
+          kubectl wait --for=condition=available deployment/wordpress-oauth-pipeline -n admin-apps --timeout=300s
+          
+          # Test health endpoint
+          kubectl port-forward -n admin-apps svc/wordpress-oauth-pipeline 9099:9099 &
+          PORT_FORWARD_PID=$!
+          sleep 5
+          
+          HEALTH_STATUS=$(curl -s http://localhost:9099/health | jq -r '.status')
+          kill $PORT_FORWARD_PID || true
+          
+          if [ "$HEALTH_STATUS" != "healthy" ]; then
+            echo "❌ Pipeline service health check failed after deployment"
+            exit 1
+          fi
+          
+          echo "✅ Pipeline service deployed successfully and is healthy"
+
+      - name: Deployment summary
+        run: |
+          echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Services Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Infrastructure**: Kubernetes cluster and resources" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Platform**: OpenWebUI, Authentik, and core services" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Tenants**: WordPress tenant(s) with multi-tenant support" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Pipeline**: WordPress OAuth2 pipeline with latest code" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Service URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **LoadBalancer**: http://85.215.220.121" >> $GITHUB_STEP_SUMMARY
+          echo "- **WordPress**: http://85.215.220.121 (Host: wordpress-tenant1.local)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OpenWebUI**: http://85.215.220.121 (Host: openwebui.local)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Authentik**: http://85.215.220.121 (Host: authentik.local)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Deployment completed**: $(date -u)" >> $GITHUB_STEP_SUMMARY

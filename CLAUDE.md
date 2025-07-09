@@ -42,22 +42,16 @@ curl -H "Host: authentik.local" http://85.215.220.121/ -I
    - See: `docs/OPENAI_API_CONFIGURATION.md`
 
 ### Known Issues
-1. **Pipeline Import Error**: `ModuleNotFoundError: No module named 'wordpress_client'`
-   - Status: Docker build issue, workaround available
-   - See: `docs/IMPLEMENTATION_STATUS.md#known-issues-and-workarounds`
-
-2. **OAuth2 Frontend UI**: "Login with Authentik SSO" button not visible
+1. **OAuth2 Frontend UI**: "Login with Authentik SSO" button not visible
    - Status: Backend configured, frontend integration pending
 
 ## Active Development Priorities
 
 ### High Priority
-1. Fix pipeline service Python import issue
-2. Complete OAuth2 frontend integration  
-3. Finalize GitHub Actions deployment workflow
+1. Complete OAuth2 frontend integration  
 
 ### Medium Priority
-1. Deploy Prometheus/Grafana monitoring
+1. Deploy optional monitoring stack (Prometheus/Grafana)
 2. Implement automated backup strategy
 3. Performance optimization
 
