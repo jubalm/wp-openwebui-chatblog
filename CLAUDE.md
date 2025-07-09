@@ -34,6 +34,11 @@ curl -H "Host: openwebui.local" http://85.215.220.121/api/config
 curl -H "Host: authentik.local" http://85.215.220.121/ -I
 ```
 
+### Recent Updates
+1. **Ollama Migration Complete**: Ollama has been removed and replaced with IONOS OpenAI API
+   - Status: ✅ Complete - Configuration updated, documentation migrated
+   - See: `docs/OPENAI_API_CONFIGURATION.md`
+
 ### Known Issues
 1. **Pipeline Import Error**: `ModuleNotFoundError: No module named 'wordpress_client'`
    - Status: Docker build issue, workaround available

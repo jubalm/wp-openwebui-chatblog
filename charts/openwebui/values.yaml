@@ -1,9 +1,14 @@
+# OpenWebUI Configuration for IONOS OpenAI API
+# Ollama has been removed and replaced with IONOS OpenAI compatible endpoint
 secret:
   create: true
   name: openwebui-env-secrets
+  # Replace with your actual IONOS OpenAI API key
   openai_api_key: "REPLACE_ME"
+  # IONOS OpenAI compatible endpoint (configured for IONOS infrastructure)
   openai_api_base_url: "https://openai.inference.de-txl.ionos.com/v1"
 
+# Ollama configuration (disabled - using IONOS OpenAI API instead)
 ollama:
   enabled: false
 

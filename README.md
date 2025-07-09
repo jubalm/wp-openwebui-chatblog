@@ -28,7 +28,7 @@ curl -H "Host: openwebui.local" http://85.215.220.121/
 ## ✨ Key Features
 
 - **Multi-Tenant WordPress**: Isolated instances with dedicated databases
-- **AI Content Generation**: OpenWebUI integration with Ollama for content creation
+- **AI Content Generation**: OpenWebUI integration with IONOS OpenAI API for content creation
 - **Single Sign-On**: Authentik SSO with OAuth2/OIDC for all services
 - **Content Automation**: Intelligent pipeline for content processing and SEO
 - **Infrastructure as Code**: Fully automated deployment with Terraform
@@ -41,7 +41,7 @@ curl -H "Host: openwebui.local" http://85.215.220.121/
 | **Infrastructure** | ✅ Operational | IONOS MKS cluster with managed databases |
 | **SSO Authentication** | ✅ Complete | Authentik with OAuth2 providers configured |
 | **WordPress Platform** | ✅ Running | Multi-tenant with MCP plugin active |
-| **OpenWebUI** | ✅ Active | OAuth2 integrated, Ollama connected |
+| **OpenWebUI** | ✅ Active | OAuth2 integrated, IONOS OpenAI API connected |
 | **Content Pipeline** | ✅ Deployed | Automated content workflows ready |
 | **CI/CD** | 🔄 In Progress | GitHub Actions automation |
 
@@ -66,6 +66,7 @@ For detailed architecture, see: [Architecture Documentation](docs/ARCHITECTURE_S
 - **[Infrastructure Status](docs/INFRASTRUCTURE_STATUS.md)** - Current infrastructure details
 - **[Implementation Status](docs/IMPLEMENTATION_STATUS.md)** - What's built vs planned
 - **[Technical Overview](docs/3.TECHNICAL_OVERVIEW.md)** - Detailed technical architecture
+- **[OpenAI API Configuration](docs/OPENAI_API_CONFIGURATION.md)** - IONOS OpenAI API setup (replaces Ollama)
 
 ## 🚀 Deployment
 
