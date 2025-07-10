@@ -357,7 +357,7 @@ resource "kubernetes_secret" "wordpress_oauth_env" {
     namespace = kubernetes_namespace.admin_apps.metadata[0].name
   }
   data = {
-    WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
+    WORDPRESS_ENCRYPTION_KEY = "sFR3c6QlC9BH1r1fR-1B1L0cJzlLqJrS_HqlBJBDlhE="  # Valid Fernet key
     AUTHENTIK_URL           = "http://authentik.local"
     AUTHENTIK_CLIENT_ID     = var.authentik_client_id
     AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
@@ -366,7 +366,8 @@ resource "kubernetes_secret" "wordpress_oauth_env" {
 
 resource "random_password" "wordpress_encryption_key" {
   length  = 32
-  special = false
+  special = true
+  override_special = "-_"
 }
 
 # Ingress for WordPress OAuth2 Pipeline - TEMPORARILY DISABLED
