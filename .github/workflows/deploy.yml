@@ -88,14 +88,22 @@ jobs:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-      - name: Import existing platform resources
+      - name: Import existing platform resources if needed
         run: |
           cd terraform/platform
-          # Import resources that already exist in the cluster
-          terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || echo "Deployment already in state"
-          terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || echo "Service already in state"
-          terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || echo "PVC already in state"
-          terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || echo "Secret already in state"
+          # Check if resources need to be imported
+          if ! terraform state show kubernetes_deployment.wordpress_oauth_pipeline >/dev/null 2>&1; then
+            terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
+          fi
+          if ! terraform state show kubernetes_service.wordpress_oauth_pipeline >/dev/null 2>&1; then
+            terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
+          fi
+          if ! terraform state show kubernetes_persistent_volume_claim.wordpress_oauth_data >/dev/null 2>&1; then
+            terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || true
+          fi
+          if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
+            terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
+          fi
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
@@ -130,14 +138,22 @@ jobs:
           path: terraform/platform
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-      - name: Import existing platform resources
+      - name: Import existing platform resources if needed
         run: |
           cd terraform/platform
-          # Import resources that already exist in the cluster
-          terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || echo "Deployment already in state"
-          terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || echo "Service already in state"
-          terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || echo "PVC already in state"
-          terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || echo "Secret already in state"
+          # Check if resources need to be imported
+          if ! terraform state show kubernetes_deployment.wordpress_oauth_pipeline >/dev/null 2>&1; then
+            terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
+          fi
+          if ! terraform state show kubernetes_service.wordpress_oauth_pipeline >/dev/null 2>&1; then
+            terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
+          fi
+          if ! terraform state show kubernetes_persistent_volume_claim.wordpress_oauth_data >/dev/null 2>&1; then
+            terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || true
+          fi
+          if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
+            terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
+          fi
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
       - name: Export fresh kubeconfig
