@@ -1,0 +1,230 @@
+name: Infrastructure Destruction
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      confirm_destruction:
+        description: 'Type "DESTROY" to confirm complete infrastructure removal'
+        required: true
+        type: string
+
+jobs:
+  # ======================================================================================
+  # Plan Phase - Show what will be destroyed (No approval required)
+  # ======================================================================================
+  plan-tenant-destruction:
+    name: 'Plan: Show Tenant Resources for Destruction'
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_destruction == 'DESTROY'
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cr_username: ${{ secrets.CR_USERNAME }}
+      TF_VAR_cr_password: ${{ secrets.CR_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/tenant init
+      - name: Show Tenant Destruction Plan
+        run: |
+          echo "# 🗑️ Tenant Resources to be DESTROYED" >> $GITHUB_STEP_SUMMARY
+          echo "## Resources:" >> $GITHUB_STEP_SUMMARY
+          terraform -chdir=terraform/tenant plan -destroy -no-color | tee plan_output.txt
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  plan-platform-destruction:
+    name: 'Plan: Show Platform Resources for Destruction'
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_destruction == 'DESTROY'
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+      TF_VAR_authentik_client_id: ${{ secrets.AUTHENTIK_CLIENT_ID }}
+      TF_VAR_authentik_client_secret: ${{ secrets.AUTHENTIK_CLIENT_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Show Platform Destruction Plan
+        run: |
+          echo "# 🗑️ Platform Resources to be DESTROYED" >> $GITHUB_STEP_SUMMARY
+          echo "## Resources:" >> $GITHUB_STEP_SUMMARY
+          terraform -chdir=terraform/platform plan -destroy -no-color | tee plan_output.txt
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  plan-infrastructure-destruction:
+    name: 'Plan: Show Infrastructure Resources for Destruction'
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_destruction == 'DESTROY'
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/infrastructure init
+      - name: Show Infrastructure Destruction Plan
+        run: |
+          echo "# 🗑️ Infrastructure Resources to be DESTROYED" >> $GITHUB_STEP_SUMMARY
+          echo "## Resources:" >> $GITHUB_STEP_SUMMARY
+          terraform -chdir=terraform/infrastructure plan -destroy -no-color | tee plan_output.txt
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ======================================================================================
+  # Destruction Phase - Requires Environment Approval
+  # ======================================================================================
+  destroy-tenants:
+    name: '🗑️ Destroy Tenants'
+    runs-on: ubuntu-latest
+    needs: [plan-tenant-destruction, plan-platform-destruction, plan-infrastructure-destruction]
+    environment: destruction  # This triggers manual approval requirement
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cr_username: ${{ secrets.CR_USERNAME }}
+      TF_VAR_cr_password: ${{ secrets.CR_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/tenant init
+      - name: Destroy Tenant Resources
+        run: |
+          echo "🗑️ Destroying tenant resources (WordPress, MariaDB)..."
+          terraform -chdir=terraform/tenant destroy -auto-approve
+          echo "✅ Tenant resources destroyed"
+
+  destroy-platform:
+    name: '🗑️ Destroy Platform'
+    runs-on: ubuntu-latest
+    needs: destroy-tenants
+    environment: destruction
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+      TF_VAR_authentik_client_id: ${{ secrets.AUTHENTIK_CLIENT_ID }}
+      TF_VAR_authentik_client_secret: ${{ secrets.AUTHENTIK_CLIENT_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/platform init
+      - name: Destroy Platform Resources
+        run: |
+          echo "🗑️ Destroying platform resources (Authentik, OpenWebUI, PostgreSQL)..."
+          terraform -chdir=terraform/platform destroy -auto-approve
+          echo "✅ Platform resources destroyed"
+
+  destroy-infrastructure:
+    name: '🗑️ Destroy Infrastructure'
+    runs-on: ubuntu-latest
+    needs: destroy-platform
+    environment: destruction
+    env:
+      TF_VAR_ionos_token: ${{ secrets.IONOS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: Terraform Init
+        run: terraform -chdir=terraform/infrastructure init
+      - name: Destroy Infrastructure Resources
+        run: |
+          echo "🗑️ Destroying infrastructure (K8s cluster, datacenter, networking)..."
+          terraform -chdir=terraform/infrastructure destroy -auto-approve
+          echo "✅ Infrastructure resources destroyed"
+
+  # ======================================================================================
+  # Optional: Complete State Reset
+  # ======================================================================================
+  clean-terraform-state:
+    name: '🧹 Clean Terraform State (Optional)'
+    runs-on: ubuntu-latest
+    needs: destroy-infrastructure
+    environment: destruction
+    if: github.event.inputs.confirm_destruction == 'DESTROY'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Remove Terraform State Files
+        run: |
+          echo "🧹 Cleaning Terraform state files from S3..."
+          
+          # Remove state files (use || true to continue even if files don't exist)
+          aws s3 rm s3://demo-vdc-backend-store/tenant/terraform.tfstate || true
+          aws s3 rm s3://demo-vdc-backend-store/platform/terraform.tfstate || true
+          aws s3 rm s3://demo-vdc-backend-store/infrastructure/terraform.tfstate || true
+          
+          # Remove state lock files if they exist
+          aws s3 rm s3://demo-vdc-backend-store/tenant/terraform.tfstate.lock || true
+          aws s3 rm s3://demo-vdc-backend-store/platform/terraform.tfstate.lock || true
+          aws s3 rm s3://demo-vdc-backend-store/infrastructure/terraform.tfstate.lock || true
+          
+          echo "✅ Terraform state cleaned"
+
+  # ======================================================================================
+  # Summary
+  # ======================================================================================
+  destruction-summary:
+    name: '📋 Destruction Summary'
+    runs-on: ubuntu-latest
+    needs: [destroy-tenants, destroy-platform, destroy-infrastructure]
+    if: always()
+    steps:
+      - name: Generate Destruction Report
+        run: |
+          echo "# 🗑️ Infrastructure Destruction Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Destroyed Components" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Tenants**: WordPress instances and MariaDB clusters" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Platform**: Authentik, OpenWebUI, PostgreSQL, and services" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Infrastructure**: Kubernetes cluster, datacenter, and networking" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Infrastructure is completely removed" >> $GITHUB_STEP_SUMMARY
+          echo "- Ready for fresh deployment or migration to new cluster" >> $GITHUB_STEP_SUMMARY
+          echo "- Run deploy workflow to rebuild on same or different infrastructure" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🕒 **Destruction completed**: $(date -u)" >> $GITHUB_STEP_SUMMARY
