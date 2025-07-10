@@ -9,15 +9,32 @@ echo "Starting WordPress with custom entrypoint..."
     echo "Waiting for WordPress to be ready..."
     sleep 10  # Give WordPress time to start
     
-    # Wait for database connection
+    # Wait for database connection based on database type
     echo "Waiting for database connection..."
-    # Add detailed logging for database connection check
-    until wp --allow-root --path="/var/www/html" db check 2>/dev/null; do
-        echo "Database not ready, waiting..."
-        sleep 3
-    done
-
-    echo "Database connection established!"
+    
+    if [ "${DATABASE_TYPE:-mariadb}" = "sqlite" ]; then
+        echo "Using SQLite database - ensuring database directory exists..."
+        
+        # Create SQLite database directory
+        mkdir -p /var/www/html/wp-content/database
+        chown -R www-data:www-data /var/www/html/wp-content/database
+        
+        # Activate SQLite plugin if not already active
+        if wp --allow-root --path="/var/www/html" plugin list --name=sqlite-database-integration --status=inactive 2>/dev/null | grep -q sqlite-database-integration; then
+            wp --allow-root --path="/var/www/html" plugin activate sqlite-database-integration
+            echo "SQLite Database Integration plugin activated!"
+        fi
+        
+        echo "SQLite database ready!"
+    else
+        echo "Using MariaDB/MySQL database - checking connection..."
+        # Add detailed logging for database connection check
+        until wp --allow-root --path="/var/www/html" db check 2>/dev/null; do
+            echo "Database not ready, waiting..."
+            sleep 3
+        done
+        echo "Database connection established!"
+    fi
 
     # Ensure WordPress installation proceeds only if database is ready
     if ! wp --allow-root --path="/var/www/html" core is-installed 2>/dev/null; then
@@ -36,6 +53,16 @@ echo "Starting WordPress with custom entrypoint..."
         
         # Activate plugins
         echo "Activating plugins..."
+        
+        # Activate SQLite plugin first if using SQLite database
+        if [ "${DATABASE_TYPE:-mariadb}" = "sqlite" ]; then
+            if wp --allow-root --path="/var/www/html" plugin list --name=sqlite-database-integration --status=inactive 2>/dev/null | grep -q sqlite-database-integration; then
+                wp --allow-root --path="/var/www/html" plugin activate sqlite-database-integration
+                echo "sqlite-database-integration plugin activated!"
+            else
+                echo "sqlite-database-integration plugin not found or already active"
+            fi
+        fi
         
         # Activate wordpress-mcp plugin
         if wp --allow-root --path="/var/www/html" plugin list --name=wordpress-mcp --status=inactive 2>/dev/null | grep -q wordpress-mcp; then
