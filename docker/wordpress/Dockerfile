@@ -13,7 +13,6 @@ RUN mkdir -p /build/tools && \
 # Define ARG variables for plugin download links
 ARG WORDPRESS_MCP=https://github.com/Automattic/wordpress-mcp/releases/download/v0.2.2/wordpress-mcp.zip
 ARG OPENID_CONNECT=https://github.com/oidc-wp/openid-connect-generic/archive/refs/tags/3.10.0.tar.gz
-ARG SQLITE_INTEGRATION=https://downloads.wordpress.org/plugin/sqlite-database-integration.2.1.11.zip
 
 # Download and prepare WordPress MCP plugin
 RUN mkdir -p /build/wordpress-mcp && \
@@ -25,12 +24,6 @@ RUN mkdir -p /build/wordpress-mcp && \
 RUN curl -L -o /tmp/openid-connect-generic.tar.gz $OPENID_CONNECT && \
   mkdir -p /build/openid-connect-generic && \
   tar -xzf /tmp/openid-connect-generic.tar.gz --strip-components=1 -C /build/openid-connect-generic
-
-# Download and prepare SQLite Database Integration plugin
-RUN mkdir -p /build/sqlite-database-integration && \
-  curl -L -o /tmp/sqlite-integration.zip $SQLITE_INTEGRATION && \
-  unzip /tmp/sqlite-integration.zip -d /tmp && \
-  mv /tmp/sqlite-database-integration/* /build/sqlite-database-integration
 
 # Copy WordPress-OpenWebUI Connector plugin from local source
 COPY plugins/wordpress-openwebui-connector /build/wordpress-openwebui-connector
@@ -45,7 +38,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends iputils-ping ne
 # Copy prepared plugins from build stage
 COPY --from=build /build/wordpress-mcp /usr/src/wordpress/wp-content/plugins/wordpress-mcp
 COPY --from=build /build/openid-connect-generic /usr/src/wordpress/wp-content/plugins/openid-connect-generic
-COPY --from=build /build/sqlite-database-integration /usr/src/wordpress/wp-content/plugins/sqlite-database-integration
 COPY --from=build /build/wordpress-openwebui-connector /usr/src/wordpress/wp-content/plugins/wordpress-openwebui-connector
 
 # Copy mysql-client binaries from build stage
