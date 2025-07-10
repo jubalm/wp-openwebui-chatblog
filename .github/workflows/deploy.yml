@@ -106,7 +106,10 @@ jobs:
           fi
           # Import Authentik helm release if it exists
           if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
-            terraform import helm_release.authentik admin-apps/authentik || true
+            # Check if authentik release exists in cluster
+            if helm list -n admin-apps | grep -q "^authentik\s"; then
+              terraform import helm_release.authentik admin-apps/authentik || true
+            fi
           fi
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
@@ -160,7 +163,10 @@ jobs:
           fi
           # Import Authentik helm release if it exists
           if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
-            terraform import helm_release.authentik admin-apps/authentik || true
+            # Check if authentik release exists in cluster
+            if helm list -n admin-apps | grep -q "^authentik\s"; then
+              terraform import helm_release.authentik admin-apps/authentik || true
+            fi
           fi
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
