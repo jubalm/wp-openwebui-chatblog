@@ -147,23 +147,48 @@ resource "kubernetes_network_policy" "tenant_isolation" {
       }
     }
     
-    # Allow egress for external services (database, internet)
+    # Allow egress for external services (internet, DNS)
     egress {
-      to {}  # Allow to any destination
+      # Allow HTTPS traffic to any external destination
+      to {
+        ip_block {
+          cidr = "0.0.0.0/0"
+          except = ["169.254.169.254/32"]  # Block metadata service
+        }
+      }
       ports {
         protocol = "TCP"
         port     = "443"
+      }
+    }
+    
+    # Allow HTTP traffic to any external destination  
+    egress {
+      to {
+        ip_block {
+          cidr = "0.0.0.0/0"
+          except = ["169.254.169.254/32"]  # Block metadata service
+        }
       }
       ports {
         protocol = "TCP"
         port     = "80"
       }
-      ports {
-        protocol = "TCP"
-        port     = "3306"
+    }
+    
+    # Allow DNS resolution
+    egress {
+      to {
+        ip_block {
+          cidr = "0.0.0.0/0"
+        }
       }
       ports {
         protocol = "UDP"
+        port     = "53"
+      }
+      ports {
+        protocol = "TCP"
         port     = "53"
       }
     }
