@@ -29,8 +29,6 @@ wp-openwebui/
     ├── 5.WORDPRESS_OPENWEBUI_INTEGRATION_README.md  # Integration specifics
     ├── ARCHITECTURE_STATUS.md         # Current architecture overview
     ├── DEVELOPER_QUICKSTART.md        # Essential developer commands
-    ├── IMPLEMENTATION_STATUS.md       # What's built vs planned
-    ├── INFRASTRUCTURE_STATUS.md       # Current infrastructure details
     ├── MULTI_TENANT_ARCHITECTURE.md   # Multi-tenancy design
     ├── PLAN_WORDPRESS_OPENWEBUI_INTEGRATION_PLAN.md # Integration planning
     ├── TENANT_PROVISIONING_QUICKSTART.md # Tenant setup guide
@@ -42,8 +40,8 @@ wp-openwebui/
 
 ### Project Overview & Status
 - **Current Status**: `README.md`, `PRP.md` (Executive Summary)
-- **Implementation Progress**: `docs/IMPLEMENTATION_STATUS.md`
-- **Known Issues**: `docs/IMPLEMENTATION_STATUS.md#known-issues-and-workarounds`
+- **Implementation Progress**: `CLAUDE.md` (Implementation Status section)
+- **Known Issues**: `CLAUDE.md` (Known Issues and Workarounds section)
 
 ### Requirements & Planning
 - **Current Requirements**: `PRP.md` (Project Requirements Plan)
