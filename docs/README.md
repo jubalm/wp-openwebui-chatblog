@@ -16,6 +16,7 @@ This directory contains comprehensive documentation for the IONOS WordPress-Open
 ### 🚀 Deployment
 - **[quickstart.md](deployment/quickstart.md)** - Essential developer commands and k9s usage
 - **[deployment-strategy.md](deployment/deployment-strategy.md)** - Deployment patterns and networking
+- **[terraform-helm-integration.md](deployment/terraform-helm-integration.md)** - Terraform-Helm boundary management
 - **[github-actions-approval.md](deployment/github-actions-approval.md)** - Manual approval setup guide
 - **[github-env-setup.md](deployment/github-env-setup.md)** - Environment configuration for CI/CD
 - **[destruction-workflow.md](deployment/destruction-workflow.md)** - Safe infrastructure teardown

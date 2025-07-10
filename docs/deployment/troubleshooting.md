@@ -60,3 +60,25 @@ resource "helm_release" "authentik" {
 helm uninstall authentik -n admin-apps
 helm uninstall openwebui -n admin-apps
 ```
+
+## Terraform-Helm Integration Issues
+
+### 5. Problem: State Ownership Conflicts Between Terraform and Helm
+
+- **Symptom:** Deployment failures with errors like "cannot re-use a name that is still in use" and "context deadline exceeded"
+- **Root Cause:** Terraform and Helm were fighting over resource ownership. Resources created by Helm releases were conflicting with Terraform-managed resources.
+- **Solution:** Implemented clear tool boundaries and state reconciliation. See [Terraform-Helm Integration Guide](terraform-helm-integration.md) for detailed patterns.
+
+### 6. Problem: Circular Dependency Between Deployment and PVC
+
+- **Symptom:** Terraform plan fails with "Error: Cycle: kubernetes_deployment.wordpress_oauth_pipeline, kubernetes_persistent_volume_claim.wordpress_oauth_data"
+- **Root Cause:** The PVC had a `depends_on` referencing the deployment that consumes it, creating a circular dependency.
+- **Solution:** Removed the incorrect `depends_on` from the PVC. Terraform automatically handles the correct creation order based on resource references.
+
+### 7. Problem: Stale Plan After State Import
+
+- **Symptom:** "Error: Saved plan is stale" during terraform apply after importing resources
+- **Root Cause:** State import operations were modifying the state after the plan was created, invalidating the plan.
+- **Solution:** Moved state validation and import logic to the plan phase in the GitHub Actions workflow.
+
+For comprehensive integration patterns, see the [Terraform-Helm Integration Guide](terraform-helm-integration.md).
