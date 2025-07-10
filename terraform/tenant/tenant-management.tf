@@ -149,6 +149,7 @@ resource "kubernetes_network_policy" "tenant_isolation" {
     
     # Allow egress for external services (database, internet)
     egress {
+      to {}  # Allow to any destination
       ports {
         protocol = "TCP"
         port     = "443"
