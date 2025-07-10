@@ -36,10 +36,16 @@ spec:
               containerPort: 80
               protocol: TCP
           env:
+            - name: DATABASE_TYPE
+              value: {{ .Values.database.type | default "mariadb" | quote }}
+            {{- if eq (.Values.database.type | default "mariadb") "sqlite" }}
+            - name: SQLITE_DB_PATH
+              value: {{ .Values.database.path | quote }}
+            {{- else }}
             - name: WORDPRESS_DB_HOST
               value: {{ .Values.database.host | quote }}
             - name: WORDPRESS_DB_PORT
-              value: {{ .Values.database.port | quote }}
+              value: {{ .Values.database.port | default 3306 | quote }}
             - name: WORDPRESS_DB_USER
               value: {{ .Values.database.user | quote }}
             - name: WORDPRESS_DB_NAME
@@ -49,6 +55,7 @@ spec:
                 secretKeyRef:
                   name: {{ printf "%s-db-credentials" (include "wordpress.fullname" .) }}
                   key: password
+            {{- end }}
             - name: SITE_URL
               value: {{ .Values.site.url | quote }}
             - name: SITE_TITLE

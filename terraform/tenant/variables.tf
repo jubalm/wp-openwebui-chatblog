@@ -118,9 +118,10 @@ locals {
       memory_request = "128Mi"
       memory_limit   = "512Mi"
       storage_size   = "5Gi"
-      db_cores       = 1
-      db_ram         = 2
-      db_storage     = 10
+      database_type  = "sqlite"  # Free tier uses SQLite
+      db_cores       = 1         # Not used for SQLite
+      db_ram         = 2         # Not used for SQLite
+      db_storage     = 10        # Not used for SQLite
       features = {
         content_automation = true
         sso_enabled       = false
@@ -135,6 +136,7 @@ locals {
       memory_request = "256Mi"
       memory_limit   = "2Gi"
       storage_size   = "50Gi"
+      database_type  = "mariadb"  # Pro tier uses managed MariaDB
       db_cores       = 2
       db_ram         = 4
       db_storage     = 50
@@ -152,6 +154,7 @@ locals {
       memory_request = "512Mi"
       memory_limit   = "4Gi"
       storage_size   = "200Gi"
+      database_type  = "mariadb"  # Enterprise tier uses managed MariaDB
       db_cores       = 4
       db_ram         = 8
       db_storage     = 200
@@ -187,6 +190,7 @@ locals {
         memory_request = config.memory_request != null ? config.memory_request : local.tier_configs[config.tier].memory_request
         memory_limit   = config.memory_limit != null ? config.memory_limit : local.tier_configs[config.tier].memory_limit
         storage_size   = config.storage_size != null ? config.storage_size : local.tier_configs[config.tier].storage_size
+        database_type  = local.tier_configs[config.tier].database_type
         db_cores       = config.db_cores != null ? config.db_cores : local.tier_configs[config.tier].db_cores
         db_ram         = config.db_ram != null ? config.db_ram : local.tier_configs[config.tier].db_ram
         db_storage     = config.db_storage != null ? config.db_storage : local.tier_configs[config.tier].db_storage

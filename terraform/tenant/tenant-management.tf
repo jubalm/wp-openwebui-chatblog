@@ -1,8 +1,12 @@
 # Multi-Tenant Management Resources
 
-# Generate secure passwords for database connections
+# Generate secure passwords for database connections (only for MariaDB tenants)
 resource "random_password" "db_password" {
-  for_each = local.enhanced_tenants
+  for_each = {
+    for tenant_id, config in local.enhanced_tenants :
+    tenant_id => config
+    if config.database_type == "mariadb"
+  }
   length   = 16
   special  = true
 }
@@ -14,9 +18,13 @@ resource "random_password" "oauth_client_secret" {
   special  = false
 }
 
-# Create MariaDB clusters with tier-based configuration
+# Create MariaDB clusters only for tiers that require managed database
 resource "ionoscloud_mariadb_cluster" "mariadb" {
-  for_each        = local.enhanced_tenants
+  for_each        = {
+    for tenant_id, config in local.enhanced_tenants :
+    tenant_id => config
+    if config.database_type == "mariadb"
+  }
   display_name    = "mariadb-${each.key}"
   location        = each.value.region
   mariadb_version = "10.6"
@@ -283,12 +291,21 @@ resource "helm_release" "wordpress" {
         timezone      = each.value.settings.timezone
       }
       
-      # Database configuration
-      database = {
+      # Database configuration - conditional based on database type
+      database = each.value.database_type == "sqlite" ? {
+        type     = "sqlite"
+        path     = "/var/www/html/wp-content/database/wordpress.sqlite"
+        host     = ""
+        user     = ""
+        name     = ""
+        password = ""
+      } : {
+        type     = "mariadb"
         host     = ionoscloud_mariadb_cluster.mariadb[each.key].dns_name
         user     = "wpuser"
         name     = "wordpress"
         password = random_password.db_password[each.key].result
+        path     = ""
       }
       
       # Resource limits based on tier
@@ -380,6 +397,10 @@ resource "helm_release" "wordpress" {
           value = each.value.tier
         },
         {
+          name = "DATABASE_TYPE"
+          value = each.value.database_type
+        },
+        {
           name = "CONTENT_AUTOMATION_ENABLED"
           value = tostring(each.value.features.content_automation)
         }
@@ -409,7 +430,6 @@ resource "helm_release" "wordpress" {
     kubernetes_namespace.wordpress_tenants,
     kubernetes_secret.registry_secret,
     kubernetes_secret.tenant_oauth_config,
-    kubernetes_config_map.tenant_config,
-    ionoscloud_mariadb_cluster.mariadb
+    kubernetes_config_map.tenant_config
   ]
 }
