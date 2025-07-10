@@ -107,6 +107,8 @@ resource "random_password" "authentik_secret_key" {
 }
 
 
+# NGINX Ingress - managed separately or imported if exists
+# This resource is idempotent and can be safely reapplied
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
   namespace        = "ingress-nginx"
@@ -114,7 +116,19 @@ resource "helm_release" "nginx_ingress" {
   repository       = "https://kubernetes.github.io/ingress-nginx"
   chart            = "ingress-nginx"
   version          = "4.10.1"
-  # You can add custom values here if needed
+  
+  # Handle existing releases gracefully
+  replace = true
+  
+  lifecycle {
+    # Prevent accidental deletion of critical infrastructure
+    prevent_destroy = true
+    # Ignore changes that don't affect core functionality
+    ignore_changes = [
+      version,  # Allow version drift
+      metadata
+    ]
+  }
 }
 
 resource "helm_release" "openwebui" {
@@ -233,6 +247,12 @@ resource "kubernetes_secret" "openwebui_env" {
 }
 
 resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
+  # Ensure deployment is created after its dependencies
+  depends_on = [
+    kubernetes_namespace.admin_apps,
+    kubernetes_secret.wordpress_oauth_env
+  ]
+  
   metadata {
     name      = "wordpress-oauth-pipeline"
     namespace = kubernetes_namespace.admin_apps.metadata[0].name
@@ -331,9 +351,15 @@ resource "kubernetes_service" "wordpress_oauth_pipeline" {
 }
 
 resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
+  # Ensure PVC is created after the deployment that will consume it
+  depends_on = [kubernetes_deployment.wordpress_oauth_pipeline]
+  
   metadata {
     name      = "wordpress-oauth-data"
     namespace = kubernetes_namespace.admin_apps.metadata[0].name
+    labels = {
+      app = "wordpress-oauth-pipeline"
+    }
   }
 
   spec {
