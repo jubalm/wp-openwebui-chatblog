@@ -1,22 +1,22 @@
 # IONOS WordPress & OpenWebUI Integration Platform
 
-> **Status**: ✅ FULLY OPERATIONAL | **Version**: 2.1 | **Last Updated**: July 10, 2025
+> **Status**: Configuration Ready | **Version**: 2.1 | **Template**: Infrastructure as Code
 
-A production-ready, multi-tenant platform that seamlessly integrates WordPress and OpenWebUI with centralized SSO authentication, enabling AI-powered content creation and management workflows on IONOS Cloud infrastructure. Now powered by IONOS AI services for enhanced performance and scalability.
+A multi-tenant platform configuration that integrates WordPress and OpenWebUI with centralized SSO authentication, enabling AI-powered content creation and management workflows on IONOS Cloud infrastructure. Configured with IONOS AI services for enhanced performance and scalability.
 
 ## 🚀 Quick Start
 
 ```bash
 # Get cluster access
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 export KUBECONFIG=./kubeconfig.yaml
 
 # Verify deployment
 kubectl get pods -A
 
 # Test services
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/
-curl -H "Host: openwebui.local" http://85.215.220.121/
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/
+curl -H "Host: openwebui.local" http://<loadbalancer-ip>/
 
 # Run integration tests
 ./tests/scripts/test-integration.sh
@@ -34,21 +34,21 @@ curl -H "Host: openwebui.local" http://85.215.220.121/
 - **Infrastructure as Code**: Fully automated deployment with Terraform
 - **Cloud Native**: Built on IONOS MKS with managed databases
 
-## 📊 Current Status
+## 📊 Configuration Status
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| **Infrastructure** | ✅ Operational | IONOS MKS cluster with managed databases |
-| **SSO Authentication** | ✅ Complete | Authentik with OAuth2 providers configured |
-| **WordPress Platform** | ✅ Running | Multi-tenant with MCP plugin active |
-| **OpenWebUI** | ✅ Active | OAuth2 integrated, IONOS OpenAI API connected |
-| **Content Pipeline** | ✅ Deployed | Automated content workflows ready |
-| **CI/CD** | 🔄 In Progress | GitHub Actions automation |
+| **Infrastructure** | 🔧 Ready for Deployment | IONOS MKS cluster configuration with managed databases |
+| **SSO Authentication** | 🔧 Configuration Ready | Authentik with OAuth2 providers configured |
+| **WordPress Platform** | 🔧 Template Ready | Multi-tenant configuration with MCP plugin |
+| **OpenWebUI** | 🔧 Configuration Ready | OAuth2 integration, IONOS OpenAI API configured |
+| **Content Pipeline** | 🔧 Needs Configuration | Automated content workflow templates |
+| **CI/CD** | 🔧 Implementation Needed | GitHub Actions automation templates |
 
 ## 🏗️ Architecture Overview
 
 ```
-IONOS Cloud (85.215.220.121)
+IONOS Cloud (<loadbalancer-ip>)
 ├── WordPress (wordpress-tenant1.local)
 ├── OpenWebUI (openwebui.local)
 ├── Authentik SSO (authentik.local)
@@ -119,13 +119,13 @@ Authentik admin recovery token:
 /recovery/use-token/cw3mx6Wp7CqGHizn4aOGJNkwgrBTuiRZf4YhQ9pOHe5iBcbOnxsi9ZwrZ8vG/
 ```
 
-## 🐛 Known Issues
+## 🔧 Implementation Tasks
 
-1. **Pipeline Import Error**: Python module import issue in content pipeline
-   - Workaround available in [Implementation Status](docs/IMPLEMENTATION_STATUS.md#known-issues-and-workarounds)
+1. **Pipeline Configuration**: Python module dependency configuration needed
+   - Resolution steps available in [Implementation Status](docs/IMPLEMENTATION_STATUS.md#known-issues-and-workarounds)
 
-2. **OAuth2 Frontend**: SSO button not visible in OpenWebUI
-   - Backend configured, frontend integration pending
+2. **OAuth2 Frontend**: SSO button integration for OpenWebUI
+   - Backend configured, frontend integration implementation needed
 
 ## 🛠️ Platform Management
 

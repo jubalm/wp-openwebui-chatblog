@@ -3,7 +3,7 @@
 # Check if cluster ID is provided
 if [ -z "$1" ]; then
     echo "Usage: $0 <cluster-id>"
-    echo "Example: $0 354372a8-cdfc-4c4c-814c-37effe9bf8a2"
+    echo "Example: $0 <your-cluster-id>"
     exit 1
 fi
 

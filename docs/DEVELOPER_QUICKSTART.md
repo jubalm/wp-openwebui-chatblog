@@ -1,6 +1,6 @@
 # Developer Quickstart Guide
 
-> **Last Updated**: July 8, 2025  
+> **Template**: Developer commands and procedures  
 > **Purpose**: Essential commands and procedures for developers
 
 ## Prerequisites
@@ -15,7 +15,7 @@
 ### 1. Get Cluster Access
 ```bash
 # Download kubeconfig
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 
 # Set environment variable
 export KUBECONFIG=./kubeconfig.yaml
@@ -146,9 +146,9 @@ kubectl get pods -A
 kubectl get pods -A | grep -E "(wordpress|openwebui|authentik)"
 
 # Service endpoints test
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/
-curl -H "Host: openwebui.local" http://85.215.220.121/api/config
-curl -H "Host: authentik.local" http://85.215.220.121/ -I
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/wp-json/wp/v2/
+curl -H "Host: openwebui.local" http://<loadbalancer-ip>/api/config
+curl -H "Host: authentik.local" http://<loadbalancer-ip>/ -I
 ```
 
 #### Port Forwarding (Local Access)
@@ -240,10 +240,10 @@ mysql -h ma-d8nn61870q23eimk.mariadb.de-txl.ionos.com -u wordpress -p wordpress_
 ### OAuth2 Flow Testing
 ```bash
 # 1. Get authorization URL
-curl -H "Host: authentik.local" http://85.215.220.121/application/o/authorize/?client_id=openwebui-client
+curl -H "Host: authentik.local" http://<loadbalancer-ip>/application/o/authorize/?client_id=openwebui-client
 
 # 2. Test token endpoint
-curl -X POST -H "Host: authentik.local" http://85.215.220.121/application/o/token/ \
+curl -X POST -H "Host: authentik.local" http://<loadbalancer-ip>/application/o/token/ \
   -d "grant_type=authorization_code" \
   -d "code=<auth-code>" \
   -d "client_id=openwebui-client" \
@@ -253,13 +253,13 @@ curl -X POST -H "Host: authentik.local" http://85.215.220.121/application/o/toke
 ### API Testing
 ```bash
 # WordPress API
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/posts
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/wp-json/wp/v2/posts
 
 # OpenWebUI API
-curl -H "Host: openwebui.local" http://85.215.220.121/api/v1/models
+curl -H "Host: openwebui.local" http://<loadbalancer-ip>/api/v1/models
 
 # Pipeline Service
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121:9099/health
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>:9099/health
 ```
 
 ## Troubleshooting

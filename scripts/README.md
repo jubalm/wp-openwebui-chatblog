@@ -93,8 +93,8 @@ The scripts support the following environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `KUBECONFIG` | `./kubeconfig.yaml` | Path to Kubernetes config |
-| `CLUSTER_ID` | `354372a8-cdfc-4c4c-814c-37effe9bf8a2` | IONOS cluster ID |
-| `LOADBALANCER_IP` | `85.215.220.121` | External LoadBalancer IP |
+| `CLUSTER_ID` | `<cluster-id>` | IONOS cluster ID |
+| `LOADBALANCER_IP` | `<loadbalancer-ip>` | External LoadBalancer IP |
 | `IONOS_TOKEN` | Required for some operations | IONOS API token |
 
 ## Common Tasks
@@ -102,7 +102,7 @@ The scripts support the following environment variables:
 ### Setting up for first use
 ```bash
 # Get cluster access
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 export KUBECONFIG=./kubeconfig.yaml
 
 # Verify connection
@@ -118,7 +118,7 @@ kubectl get nodes
 ./scripts/tenant-management.sh test production-app
 
 # 3. Access the tenant
-# Add to /etc/hosts: 85.215.220.121 wordpress-production-app.local
+# Add to /etc/hosts: <loadbalancer-ip> wordpress-production-app.local
 # Browse to: http://wordpress-production-app.local
 ```
 
@@ -139,9 +139,9 @@ kubectl get nodes
 | Memory Limit | 512Mi | 2Gi | 4Gi |
 | Storage | 5Gi | 50Gi | 200Gi |
 | Database | 1c/2GB | 2c/4GB | 4c/8GB |
-| SSO | ❌ | ✅ | ✅ |
-| Custom Plugins | ❌ | ✅ | ✅ |
-| Custom Domains | ❌ | ❌ | ✅ |
+| SSO | Not included | Included | Included |
+| Custom Plugins | Not included | Included | Included |
+| Custom Domains | Not included | Not included | Included |
 
 ## Troubleshooting
 
@@ -154,7 +154,7 @@ chmod +x scripts/*.sh
 ### Kubeconfig issues
 ```bash
 # Download fresh kubeconfig
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 ```
 
 ### Terraform state issues

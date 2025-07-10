@@ -31,21 +31,21 @@ OpenWebUI User → OpenWebUI Pipeline → Content Automation Service → WordPre
 
 ## 📋 Features
 
-### ✅ Automated Content Processing
+### Automated Content Processing
 - **Auto-generated excerpts** from content
 - **Smart tag extraction** using content analysis
 - **Table of contents** generation for long content
 - **SEO optimization** with meta titles and descriptions
 - **Content formatting** (Markdown to HTML conversion)
 
-### ✅ Workflow Management
+### Workflow Management
 - **Async processing** with status tracking
 - **Scheduled publishing** for future dates
 - **Retry logic** with exponential backoff
 - **Multi-user support** with OAuth2 authentication
 - **Content type templates** (blog_post, article, tutorial, FAQ, documentation)
 
-### ✅ OpenWebUI Integration
+### OpenWebUI Integration
 - **Natural language triggers** ("publish to WordPress", "create blog post")
 - **Context-aware content extraction** from conversations
 - **Automatic title generation** from content or user intent
@@ -155,7 +155,7 @@ Title: AI Automation in Modern Workflows
 Content Type: blog_post
 Auto-publish: No (Draft)
 
-✅ Publishing Workflow Created Successfully!
+Publishing Workflow Configuration Complete!
 
 Workflow ID: abc123-def456-ghi789
 Status: processing
@@ -364,11 +364,11 @@ kubectl logs -n admin-apps deployment/wordpress-oauth-pipeline
 
 # Test WordPress API
 curl -H "Host: wordpress-tenant1.local" \
-  http://85.215.220.121/wp-json/wp/v2/
+  http://<loadbalancer-ip>/wp-json/wp/v2/
 
 # Test OAuth2 flow
 curl -H "Host: openwebui.local" \
-  http://85.215.220.121/oauth/oidc/login -I
+  http://<loadbalancer-ip>/oauth/oidc/login -I
 
 # List active workflows
 curl -H "Authorization: Bearer token" \

@@ -120,7 +120,7 @@ kubectl get ingress -n tenant1
 kubectl get service -n ingress-nginx ingress-nginx-controller
 
 # Test access (replace with actual LoadBalancer IP)
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/
 ```
 
 ## 5. Tier Comparison
@@ -131,10 +131,10 @@ curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/
 | Memory | 512Mi | 2Gi | 4Gi |
 | Storage | 5Gi | 50Gi | 200Gi |
 | Database | 1 core, 2GB RAM | 2 cores, 4GB RAM | 4 cores, 8GB RAM |
-| SSO | ❌ | ✅ | ✅ |
-| Custom Plugins | ❌ | ✅ | ✅ |
-| Analytics | ❌ | ✅ | ✅ |
-| Custom Domains | ❌ | ❌ | ✅ |
+| SSO | Not included | Included | Included |
+| Custom Plugins | Not included | Included | Included |
+| Analytics | Not included | Included | Included |
+| Custom Domains | Not included | Not included | Included |
 | Support | Community | Standard | Premium |
 
 ## 6. Example Workflows
@@ -191,7 +191,7 @@ Each tenant automatically gets:
 kubectl get pods -n admin-apps | grep wordpress-oauth-pipeline
 
 # 2. Test tenant's WordPress API
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/wp-json/wp/v2/
 
 # 3. Test content workflow creation (via pipeline service)
 curl -X POST http://pipeline-service/api/content/workflows \

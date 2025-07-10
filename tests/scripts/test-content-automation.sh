@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 PIPELINE_SERVICE_URL="${PIPELINE_SERVICE_URL:-http://localhost:9099}"
-LOADBALANCER_IP="${LOADBALANCER_IP:-85.215.220.121}"
+LOADBALANCER_IP="${LOADBALANCER_IP:-}"
 
 # Colors for output
 RED='\033[0;31m'

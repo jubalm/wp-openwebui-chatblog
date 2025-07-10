@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-LOADBALANCER_IP="${LOADBALANCER_IP:-85.215.220.121}"
+LOADBALANCER_IP="${LOADBALANCER_IP:-}"
 KUBECONFIG_PATH="${KUBECONFIG_PATH:-./kubeconfig.yaml}"
 
 # Colors for output

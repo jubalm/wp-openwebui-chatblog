@@ -216,8 +216,10 @@ jobs:
         env:
           IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
         run: |
+          # Get cluster ID from terraform output
+          CLUSTER_ID=$(terraform -chdir=terraform/infrastructure output -raw cluster_id)
           curl -X GET \
-            "https://api.ionos.com/cloudapi/v6/k8s/clusters/354372a8-cdfc-4c4c-814c-37effe9bf8a2/kubeconfig" \
+            "https://api.ionos.com/cloudapi/v6/k8s/clusters/${CLUSTER_ID}/kubeconfig" \
             -H "Authorization: Bearer $IONOS_TOKEN" \
             -H "Content-Type: application/json" \
             -o kubeconfig.yaml

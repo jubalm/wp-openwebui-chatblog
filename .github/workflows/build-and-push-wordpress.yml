@@ -66,11 +66,9 @@ jobs:
         env:
           IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
         run: |
-          curl -X GET \
-            "https://api.ionos.com/cloudapi/v6/k8s/clusters/354372a8-cdfc-4c4c-814c-37effe9bf8a2/kubeconfig" \
-            -H "Authorization: Bearer $IONOS_TOKEN" \
-            -H "Content-Type: application/json" \
-            -o kubeconfig.yaml
+          # This workflow should not download kubeconfig directly
+          # Remove this step or use ionosctl for dynamic cluster discovery
+          echo "Cluster configuration should be obtained from deployment workflow"
 
       - name: Update pipeline service ConfigMap
         run: |

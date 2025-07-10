@@ -12,8 +12,8 @@ The destruction workflow provides a safe, automated way to completely tear down 
 2. Click "New environment"
 3. Name: `destruction`
 4. Add protection rules:
-   - ✅ Required reviewers (add yourself/team members)
-   - ✅ Prevent secrets from being accessed during deployment
+   - Required reviewers (add yourself/team members)
+   - Prevent secrets from being accessed during deployment
    - Optional: Deployment branches (restrict to main/specific branches)
 
 ### 2. Environment Configuration

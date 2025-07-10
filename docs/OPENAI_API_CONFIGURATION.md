@@ -1,6 +1,6 @@
 # OpenAI API Configuration Guide
 
-> **Migration Status**: ✅ Complete - Ollama has been removed and replaced with IONOS OpenAI compatible endpoint
+> **Configuration Template**: IONOS OpenAI compatible endpoint configuration (replaces Ollama)
 
 ## Overview
 
@@ -35,11 +35,11 @@ The following environment variables are automatically configured:
 
 ## Migration from Ollama
 
-### What Was Changed
-- ✅ Ollama integration disabled (`ollama.enabled: false`)
-- ✅ OpenAI API configuration enabled
-- ✅ Environment variables configured for IONOS endpoint
-- ✅ Documentation updated to reflect new setup
+### Configuration Changes
+- Ollama integration disabled (`ollama.enabled: false`)
+- OpenAI API configuration enabled
+- Environment variables configured for IONOS endpoint
+- Documentation templates updated for new setup
 
 ### Benefits of IONOS OpenAI API
 - **Hosted Service**: No need to manage local Ollama installation
@@ -53,7 +53,7 @@ After updating the API key, test the configuration:
 
 ```bash
 # Test OpenWebUI connectivity
-curl -H "Host: openwebui.local" http://85.215.220.121/api/config
+curl -H "Host: openwebui.local" http://<loadbalancer-ip>/api/config
 
 # Check API configuration
 kubectl get secrets openwebui-env-secrets -o yaml

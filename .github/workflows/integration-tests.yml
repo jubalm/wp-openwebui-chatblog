@@ -13,8 +13,8 @@ on:
     - cron: '0 */6 * * *'
 
 env:
-  CLUSTER_ID: "354372a8-cdfc-4c4c-814c-37effe9bf8a2"
-  LOADBALANCER_IP: "85.215.220.121"
+  CLUSTER_ID: ""  # Will be set after deployment
+  LOADBALANCER_IP: ""  # Will be set after deployment
 
 jobs:
   # ======================================================================================

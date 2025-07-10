@@ -112,8 +112,8 @@ export IONOS_TOKEN=your_token_here
 export IONOS_TOKEN=your_ionos_api_token
 
 # Default values used by scripts
-CLUSTER_ID="354372a8-cdfc-4c4c-814c-37effe9bf8a2"
-LOADBALANCER_IP="85.215.220.121"
+CLUSTER_ID="<cluster-id>"
+LOADBALANCER_IP="<loadbalancer-ip>"
 KUBECONFIG_PATH="./kubeconfig.yaml"
 ```
 
@@ -129,7 +129,7 @@ KUBECONFIG_PATH="./kubeconfig.yaml"
 ### Complete Platform Validation
 ```bash
 # 1. Get cluster access
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 
 # 2. Run integration tests
 export IONOS_TOKEN=your_token
@@ -157,7 +157,7 @@ export IONOS_TOKEN=your_token
 ## Understanding Test Results
 
 ### Success Indicators
-- ✅ Green checkmarks indicate passing tests
+- Green checkmarks indicate passing tests
 - HTTP 200/302 responses where expected
 - "healthy" status from health endpoints
 - All pods in "Running" state

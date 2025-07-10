@@ -6,8 +6,8 @@
 set -e
 
 # Configuration
-CLUSTER_ID="${CLUSTER_ID:-354372a8-cdfc-4c4c-814c-37effe9bf8a2}"
-LOADBALANCER_IP="${LOADBALANCER_IP:-85.215.220.121}"
+CLUSTER_ID="${CLUSTER_ID:-}"
+LOADBALANCER_IP="${LOADBALANCER_IP:-}"
 KUBECONFIG_FILE="${KUBECONFIG_FILE:-./kubeconfig.yaml}"
 
 # Colors for output

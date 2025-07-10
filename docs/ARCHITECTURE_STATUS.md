@@ -1,14 +1,14 @@
 # Architecture Status
 
-> **Last Updated**: July 8, 2025  
-> **Architecture Version**: 2.0 (Production-Ready)
+> **Template**: Architecture design and configuration  
+> **Architecture Version**: 2.0 (Configuration Ready)
 
 ## Current Architecture Overview
 
 ```mermaid
 graph TB
     subgraph "IONOS Cloud Infrastructure"
-        LB[LoadBalancer<br/>85.215.220.121]
+        LB[LoadBalancer<br/><loadbalancer-ip>]
         
         subgraph "MKS Cluster"
             subgraph "Platform Services"
@@ -132,7 +132,7 @@ OpenWebUI Platform
 ## Network Architecture
 
 ### External Access
-- **LoadBalancer IP**: 85.215.220.121
+- **LoadBalancer IP**: <loadbalancer-ip>
 - **DNS Mapping** (via Host headers):
   - `wordpress-tenant1.local`
   - `openwebui.local`

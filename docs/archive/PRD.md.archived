@@ -26,8 +26,8 @@ Implement a complete integration pipeline enabling:
 
 ### Current Platform Status
 **✅ Working Foundation** (July 4, 2025):
-- WordPress: Functional at `wordpress-tenant1.local` → `85.215.220.121`
-- OpenWebUI: Functional at `openwebui.local` → `85.215.220.121`
+- WordPress: Functional at `wordpress-tenant1.local` → `<loadbalancer-ip>`
+- OpenWebUI: Functional at `openwebui.local` → `<loadbalancer-ip>`
 - IONOS Infrastructure: MKS cluster stable with LoadBalancer
 - MariaDB: Connected and operational
 

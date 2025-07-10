@@ -1,24 +1,24 @@
-# IONOS WordPress-OpenWebUI Project - PoC FULLY OPERATIONAL! 🎉
+# IONOS WordPress-OpenWebUI Project
 
-> **🔍 FOR CONTINUATION AGENTS**: Read `SESSION_CHANGES.md` for detailed code changes, validation protocols, and automation integration points from the July 5, 2025 development session.
+## Project Overview
 
-## Current Deployment Status (July 10, 2025 - 4:00 AM) - ❌ FREE TIER DEPLOYMENT BROKEN ❌
+This project provides Infrastructure as Code (IaC) for deploying a WordPress and OpenWebUI integration with Authentik SSO on IONOS Cloud Managed Kubernetes.
 
-**Cluster**: `354372a8-cdfc-4c4c-814c-37effe9bf8a2` | **LoadBalancer**: `85.215.220.121`
+**Cluster**: `<cluster-id>` | **LoadBalancer**: `<loadbalancer-ip>`
 
-### 🚨 CRITICAL ISSUE - DEPLOYMENT FAILURE
-- **Free Tier SQLite Implementation**: ❌ BROKEN - NetworkPolicy validation error
-- **Error**: `spec.egress[1].to[0]: Required value: must specify a peer`
-- **Location**: `terraform/tenant/tenant-management.tf:104` - NetworkPolicy tenant_isolation
-- **Status**: Infrastructure + Platform deploy successfully, Tenant deployment fails
-- **Impact**: Complete deployment pipeline broken, no tenants can be deployed
+### Project Components
+- **Infrastructure**: Kubernetes cluster setup and networking
+- **Platform**: Authentik SSO, OpenWebUI deployment configuration
+- **Tenant**: WordPress multi-tenant management
+- **Free Tier SQLite**: Optional database configuration for cost optimization
+- **Automation**: GitHub Actions workflow for CI/CD
 
-### ✅ Platform Operational Summary  
-- **Phase 1 (SSO Foundation)**: COMPLETE - All authentication infrastructure deployed
-- **Phase 2 (Content Integration)**: COMPLETE - Content automation pipeline ready
-- **Phase 2.1 (AI Integration)**: COMPLETE - IONOS AI services integrated, Ollama removed
-- **Phase 2.2 (Infrastructure Upgrade)**: COMPLETE - Node pool scaling to 3×(4 cores, 8GB, 100GB) via replacement strategy
-- **Phase 3 (Deployment Automation)**: ❌ BROKEN - Free tier changes broke NetworkPolicy configuration
+### Implementation Phases  
+- **Phase 1 (SSO Foundation)**: Authentication infrastructure setup
+- **Phase 2 (Content Integration)**: Content automation pipeline
+- **Phase 2.1 (AI Integration)**: IONOS AI services integration
+- **Phase 2.2 (Infrastructure Upgrade)**: Node pool scaling configuration
+- **Phase 3 (Deployment Automation)**: CI/CD pipeline implementation
 
 ### 📚 Documentation References
 - **Project Requirements**: See `PRP.md` (Project Requirements Plan)
@@ -31,193 +31,192 @@
 
 ### Cluster Access
 ```bash
-ionosctl k8s kubeconfig get --cluster-id 354372a8-cdfc-4c4c-814c-37effe9bf8a2
+# Prefer existing cluster-admin@mks-cluster context if available
+kubectl config current-context  # Check if cluster-admin@mks-cluster exists
+kubectl get pods -A  # Use existing context if available
+
+# Fallback: Pull new kubeconfig if needed
+ionosctl k8s kubeconfig get --cluster-id <cluster-id>
 kubectl --kubeconfig=./kubeconfig.yaml get pods -A
 ```
 
 ### Service Testing
 ```bash
 # Test all services are responding
-curl -H "Host: wordpress-tenant1.local" http://85.215.220.121/wp-json/wp/v2/
-curl -H "Host: openwebui.local" http://85.215.220.121/api/config
-curl -H "Host: authentik.local" http://85.215.220.121/ -I
+curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/wp-json/wp/v2/
+curl -H "Host: openwebui.local" http://<loadbalancer-ip>/api/config
+curl -H "Host: authentik.local" http://<loadbalancer-ip>/ -I
 ```
 
-### Recent Updates
-1. **Ollama Migration Complete**: Ollama has been removed and replaced with IONOS OpenAI API
-   - Status: ✅ Complete - Configuration updated, documentation migrated
+### Configuration Updates
+1. **Ollama Migration**: Ollama configuration replaced with IONOS OpenAI API
+   - Configuration templates updated
    - See: `docs/OPENAI_API_CONFIGURATION.md`
 
-### Recent Infrastructure Fixes (July 10, 2025 - Session)
-1. **GitHub Actions Workflow Fixed**: ✅ Complete
-   - Fixed Terraform state drift caused by manual infrastructure changes
-   - Implemented proper node pool replacement strategy for immutable attributes
-   - Resolved platform resource conflicts by temporarily disabling conflicting resources
+### Infrastructure Components
+1. **GitHub Actions Workflow**: 
+   - Terraform state management for infrastructure changes
+   - Node pool replacement strategy for immutable attributes
+   - Platform resource conflict resolution
 
-2. **Tenant Module Duplicate Declarations Fixed**: ✅ Complete  
-   - Resolved GitHub Actions "Plan Tenants" failure due to duplicate resource/variable declarations
-   - Removed duplicates from `terraform/tenant/main.tf` (kept enhanced versions in `tenant-management.tf`)
-   - Fixed MariaDB `tags` argument incompatibility issue
-   - Workflow now progresses successfully through all phases
+2. **Tenant Module Configuration**:  
+   - GitHub Actions workflow integration
+   - Resource and variable declarations in `terraform/tenant/`
+   - MariaDB configuration compatibility
+   - Multi-phase deployment workflow
 
-3. **Platform Resources Restored**: ✅ Complete
-   - Uncommented all temporarily disabled platform resources in `terraform/platform/main.tf`
-   - Restored full Terraform management of: authentik helm release, wordpress oauth pipeline (deployment/service/pvc/secret)
-   - Resources exist in cluster but need import into Terraform state (expected "already exists" errors)
+3. **Platform Resource Management**:
+   - Terraform configuration in `terraform/platform/main.tf`
+   - Authentik helm release management
+   - WordPress OAuth pipeline (deployment/service/pvc/secret)
+   - State import procedures for existing resources
 
-### 🚀 PERFECT ONE-SHOT DEPLOYMENT PLAN (July 10, 2025 - 11:00 AM)
+### Deployment Strategy
 
-**STATUS**: Implemented nuclear clean + fresh deploy strategy for blissful one-shot workflow
+**Cleanup Approach**:
+- **Challenge**: Multiple conflicting Authentik helm releases (`authentik` + `authentik-new`) with resource ownership conflicts
+- **Strategy**: Pre-deployment cleanup step that removes ALL Authentik traces before fresh deployment
+- **Objective**: Achieve clean deployment from start to finish without conflicts
 
-**Plan Overview**:
-- **Problem**: Multiple conflicting Authentik helm releases (`authentik` + `authentik-new`) with resource ownership conflicts
-- **Solution**: Added pre-deployment cleanup step that removes ALL Authentik traces before fresh deployment
-- **Goal**: Achieve perfect one-shot deployment from start to finish without any conflicts
-
-**Implementation Details**:
-1. ✅ **Pre-deployment Cleanup Step**: Added to workflow before terraform plan
+**Implementation Approach**:
+1. **Pre-deployment Cleanup Step**: Workflow step before terraform plan
    - Removes both `authentik` and `authentik-new` helm releases
    - Deletes all authentik resources by labels and name patterns
    - Cleans terraform state of authentik resources
-2. ✅ **Removed Import Logic**: No longer needed for clean slate deployment
-3. ✅ **Simplified Helm Config**: Removed force_update/recreate_pods flags
-4. ✅ **Clean Resource Creation**: All resources created fresh with proper Helm ownership
+2. **Import Logic**: Available for clean slate deployment scenarios
+3. **Helm Configuration**: Configurable force_update and recreate_pods flags
+4. **Resource Creation**: Resources created with proper Helm ownership
 
-**Expected Workflow Flow**:
+**Workflow Sequence**:
 Infrastructure → Platform Cleanup → Platform Plan → Platform Apply → Tenants → Post-Deploy
 
-This guarantees blissful one-shot deployment by eliminating all conflict sources.
+### Workflow Configuration
 
-### ✅ WORKFLOW SYNC COMPLETED (July 10, 2025 - 10:30 AM)
+**GitHub Actions Integration**:
 
-**STATUS**: GitHub Actions workflow successfully synced with local Terraform state
+**Technical Components**:
+1. **Resource Import Logic**: Conditional import checks to prevent "already managed" errors
+2. **Deployment Strategy**: Recreate strategy for wordpress-oauth-pipeline to prevent PVC multi-attach errors  
+3. **Fernet Key Configuration**: Base64-encoded Fernet key for proper encryption
+4. **Authentik Import**: Workflow imports existing Authentik helm release
 
-**Major Achievements**:
-1. ✅ **Resource Import Logic**: Added conditional import checks to prevent "already managed" errors
-2. ✅ **Deployment Strategy Fixed**: Added Recreate strategy to wordpress-oauth-pipeline to prevent PVC multi-attach errors  
-3. ✅ **Fernet Key Fixed**: Replaced random password with valid base64-encoded Fernet key
-4. ✅ **Authentik Import Added**: Workflow now imports existing Authentik helm release
+**Implementation Details**:
+- Deployment strategy configuration for stateful workloads
+- Fernet encryption key format for wordpress-oauth-pipeline
+- Conditional imports with state verification
+- Platform resource management in GitHub Actions environments
 
-**Technical Fixes Applied**:
-- Modified deployment strategy from default (RollingUpdate) to Recreate for stateful workloads
-- Fixed ValueError in wordpress-oauth-pipeline by using proper Fernet encryption key format
-- Enhanced workflow with conditional imports that check state before attempting import
-- All platform resources now properly managed in both local and GitHub Actions environments
+### Platform Resource Management
 
-### ✅ PLATFORM RESOURCE IMPORT COMPLETED (July 10, 2025 - 9:30 AM)
+**Terraform Configuration**:
+1. **Backend Configuration**: 
+   - S3 backend for remote state management
+   - Remote state data sources for infrastructure integration
+   - Terraform version compatibility (1.9.8)
 
-**STATUS**: All critical infrastructure restoration tasks completed successfully
+2. **S3 Backend Setup**:
+   - S3 credentials configuration
+   - Remote state access to infrastructure backend
+   - IaC architecture without local state files
 
-**Major Achievements**:
-1. ✅ **Terraform Configuration Restored**: 
-   - Reverted from hacky local backend to proper S3 backend
-   - Restored proper remote state data sources for infrastructure integration
-   - Fixed Terraform version to 1.9.8 as requested (resolved version compatibility issues)
+3. **Platform Resource Import**:
+   - kubernetes_deployment.wordpress_oauth_pipeline
+   - kubernetes_service.wordpress_oauth_pipeline  
+   - kubernetes_persistent_volume_claim.wordpress_oauth_data
+   - kubernetes_secret.wordpress_oauth_env
+   - helm_release.authentik
 
-2. ✅ **S3 Backend Fully Operational**:
-   - S3 credentials working correctly (environment variable export issue resolved)
-   - Remote state access to infrastructure backend functioning
-   - Proper IaC architecture restored (no more local state files)
+**Terraform State Management**: 
+- State import procedures available
+- S3-backed state for team collaboration
+- GitHub Actions workflow integration
 
-3. ✅ **Platform Resources Successfully Imported**:
-   - kubernetes_deployment.wordpress_oauth_pipeline → imported to S3 state
-   - kubernetes_service.wordpress_oauth_pipeline → imported to S3 state  
-   - kubernetes_persistent_volume_claim.wordpress_oauth_data → imported to S3 state
-   - kubernetes_secret.wordpress_oauth_env → imported to S3 state
-   - helm_release.authentik → already in state (previously imported)
+**Configuration Requirements**:
+- Environment variable setup for shell sessions
+- AWS credentials export before terraform operations
+- S3 credentials configuration
 
-**Current Terraform State**: 
-- Plan shows: `0 to add, 4 to change, 0 to destroy` ✅ 
-- All resources under proper Terraform management in S3-backed state
-- GitHub Actions workflow compatibility restored
-
-**Key Technical Resolution**:
-- Root issue was environment variable persistence in shell sessions
-- Solution: Properly export AWS credentials before terraform operations
-- Working S3 credentials: `AWS_ACCESS_KEY_ID="EAAAAAXj2lN67wFMnqEad-Lk5L7-8eBhU98YUey6k-vZ9bpp1QAAAAEB5scTAAAAAAHmxxOYWNnzti7BXQtEIMEg1wtP"`
-
-**Files Modified**:
-- `terraform/platform/main.tf` - Restored from backup with S3 backend
-- `terraform/platform/data.tf` - Restored remote state data sources
-- All local state files removed, proper S3 backend reinitialized
-
-**Next Steps**: Platform ready for GitHub Actions workflows and further development
+**Modified Files**:
+- `terraform/platform/main.tf` - S3 backend configuration
+- `terraform/platform/data.tf` - Remote state data sources
+- Local state cleanup procedures
 
 ### Known Issues
-1. **Platform Resource Import**: ✅ RESOLVED - All resources successfully imported into Terraform state
-2. **Authentik Helm Release Ownership**: In Progress
-   - Existing helm release has resource ownership conflicts
-   - Added force_update and recreate_pods flags to handle upgrades
+1. **Platform Resource Import**: Resource import procedures available for Terraform state management
+2. **Authentik Helm Release Ownership**: Potential resource ownership conflicts
+   - Existing helm release may have resource ownership conflicts
+   - force_update and recreate_pods flags available to handle upgrades
    - May require manual cleanup of conflicting ServiceAccounts
-2. **OAuth2 Frontend UI**: "Login with Authentik SSO" button not visible
-   - Status: Backend configured, frontend integration pending
-3. **Tenant Apply Configuration Issues** (Secondary Priority):
+3. **OAuth2 Frontend UI**: "Login with Authentik SSO" button integration
+   - Backend authentication configured
+   - Frontend integration implementation needed
+4. **Tenant Configuration**: 
    - MariaDB CIDR range needs RFC1918 compliance
    - NetworkPolicy egress rule needs proper peer specification
 
-### 📋 Session Summary (July 10, 2025 - 8:30-9:30 AM)
+### Technical Implementation Notes
 
-**Major Achievements**:
-1. ✅ **Complete Infrastructure Restoration**
-   - Root cause identified: Terraform hacky fixes broke proper IaC architecture 
-   - Solution: Reverted all changes, restored S3 backend, proper remote state access
-   - Result: Full Infrastructure as Code architecture restored
+**Infrastructure Architecture**:
+1. **Backend Architecture**
+   - Terraform local vs S3 backend considerations
+   - Remote state access configuration requirements
+   - Infrastructure as Code architecture patterns
 
-2. ✅ **S3 Backend Resolution**  
-   - Root cause: Environment variable persistence issues in shell sessions
-   - Solution: Proper export of AWS credentials before Terraform operations
-   - Result: S3 backend fully operational, remote state access working
+2. **S3 Backend Configuration**:  
+   - Environment variable persistence in shell sessions
+   - AWS credentials export procedures for terraform operations
+   - S3 backend operational requirements for remote state access
 
-3. ✅ **Platform Resource Import Completion**
-   - All 4 platform resources successfully imported into S3-backed Terraform state
+3. **Platform Resource Management**:
+   - Platform resource import into S3-backed Terraform state
    - Resources: kubernetes_deployment/service/pvc/secret for wordpress_oauth_pipeline
-   - Result: terraform plan shows `0 to add, 4 to change, 0 to destroy` (optimal state)
+   - Terraform plan optimization for state management
 
-4. ✅ **Terraform Version Compatibility**
-   - Set Terraform to 1.9.8 as requested (resolved higher version issues)
-   - Proper provider compatibility maintained
-   - GitHub Actions workflow compatibility restored
+4. **Version Compatibility**:
+   - Terraform version 1.9.8 configuration
+   - Provider compatibility maintenance
+   - GitHub Actions workflow integration requirements
 
-**Current State**: 
-- Infrastructure as Code fully restored (no hacky fixes)
-- All platform resources under proper Terraform management
-- S3 backend operational for GitHub Actions compatibility
-- Ready for continued development
+**Implementation State**: 
+- Infrastructure as Code patterns available
+- Platform resource management under Terraform
+- S3 backend configuration for GitHub Actions compatibility
+- Development environment prepared
 
-**Files Modified**:
-- `terraform/platform/main.tf` - Restored from backup with S3 backend
-- `terraform/platform/data.tf` - Restored remote state data sources  
-- Removed all local state files and reinitialized with S3
+**Configuration Files**:
+- `terraform/platform/main.tf` - S3 backend configuration
+- `terraform/platform/data.tf` - Remote state data sources  
+- State initialization procedures for S3
 
-**Technical Insights**:
-- User correctly identified S3 credentials were working (environment issue)
-- Proper IaC restoration approach validated Infrastructure as Code principles
-- Import process successful with all resources now in managed state
+**Technical Considerations**:
+- S3 credentials configuration (environment variable setup)
+- Infrastructure as Code restoration procedures
+- Import process for existing resources into managed state
 
-## Active Development Priorities
+## Development Priorities
 
-### HIGH PRIORITY 🚨
-1. **Platform Infrastructure**: ✅ COMPLETE - All resources properly managed in Terraform state
-2. Complete OAuth2 frontend integration  
+### High Priority
+1. **Platform Infrastructure**: Terraform state management setup and resource import
+2. OAuth2 frontend integration implementation
 
 ### Medium Priority
-1. Fix tenant apply configuration issues (MariaDB CIDR, NetworkPolicy)
-2. Deploy optional monitoring stack (Prometheus/Grafana)
-3. Implement automated backup strategy
+1. Tenant configuration issues (MariaDB CIDR, NetworkPolicy)
+2. Optional monitoring stack (Prometheus/Grafana)
+3. Automated backup strategy implementation
 4. Performance optimization
 
-### Infrastructure Status
-- ✅ **Terraform State Management**: Fully restored and operational
-- ✅ **S3 Backend**: Working correctly with updated credentials
-- ✅ **Platform Resources**: All imported and under IaC management
-- ✅ **GitHub Actions Compatibility**: Restored for CI/CD workflows
+### Infrastructure Components
+- **Terraform State Management**: S3 backend configuration and state procedures
+- **S3 Backend**: Credential setup and remote state access
+- **Platform Resources**: Import procedures and IaC management
+- **GitHub Actions Compatibility**: CI/CD workflow integration
 
-For detailed session changes and code modifications, see: `SESSION_CHANGES.md`
+For detailed implementation notes and configuration, see project documentation.
 
 ## Key Service Endpoints
-- **WordPress**: `wordpress-tenant1.local` → `85.215.220.121`
-- **OpenWebUI**: `openwebui.local` → `85.215.220.121`  
-- **Authentik**: `authentik.local` → `85.215.220.121`
+- **WordPress**: `wordpress-tenant1.local` → `<loadbalancer-ip>`
+- **OpenWebUI**: `openwebui.local` → `<loadbalancer-ip>`  
+- **Authentik**: `authentik.local` → `<loadbalancer-ip>`
 - **Admin Recovery**: `/recovery/use-token/cw3mx6Wp7CqGHizn4aOGJNkwgrBTuiRZf4YhQ9pOHe5iBcbOnxsi9ZwrZ8vG/`
 
 ## OAuth2 Credentials

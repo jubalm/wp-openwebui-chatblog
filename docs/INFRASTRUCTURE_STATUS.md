@@ -1,28 +1,28 @@
 # Infrastructure Status
 
-> **Last Updated**: July 10, 2025  
-> **Status**: FULLY OPERATIONAL - UPGRADED INFRASTRUCTURE
+> **Last Updated**: Template for infrastructure deployment  
+> **Status**: Not deployed - Configuration ready
 
 ## Current Infrastructure Details
 
 ### IONOS Cloud Resources
-- **Cluster ID**: `354372a8-cdfc-4c4c-814c-37effe9bf8a2`
-- **LoadBalancer IP**: `85.215.220.121`
+- **Cluster ID**: `<cluster-id>`
+- **LoadBalancer IP**: `<loadbalancer-ip>`
 - **Region**: DE-TXL (Germany - Berlin)
 
 ### Database Connections
-- **PostgreSQL Cluster**: `pg-ng6akjkmbb4rn9e5.postgresql.de-txl.ionos.com`
+- **PostgreSQL Cluster**: `<postgresql-endpoint>`
   - Purpose: Authentik SSO backend
-  - Status: ✅ Operational
+  - Status: To be deployed
   - Database: `authentik`
   
-- **MariaDB Cluster**: `ma-d8nn61870q23eimk.mariadb.de-txl.ionos.com`
+- **MariaDB Cluster**: `<mariadb-endpoint>`
   - Purpose: WordPress database backend
-  - Status: ✅ Operational
+  - Status: To be deployed
   - Database: `wordpress_tenant1`
 
 ### Network Configuration
-- **LoadBalancer**: External IP `85.215.220.121`
+- **LoadBalancer**: External IP `<loadbalancer-ip>`
 - **Ingress Controller**: NGINX Ingress
 - **Service Endpoints**:
   - `wordpress-tenant1.local` → LoadBalancer
@@ -39,36 +39,36 @@
 ### AI Integration
 - **AI Provider**: IONOS OpenAI API
 - **Endpoint**: `https://openai.inference.de-txl.ionos.com/v1`
-- **Integration**: OpenWebUI configured for IONOS AI service
-- **Status**: ✅ Operational (Ollama removed for better resource efficiency)
+- **Integration**: OpenWebUI configuration for IONOS AI service
+- **Status**: Configuration ready (Ollama replaced for better resource efficiency)
 
 ## Architecture Diagram
 ```
-IONOS Cloud Infrastructure ✅
-├── MKS Cluster (354372a8-cdfc-4c4c-814c-37effe9bf8a2) ✅  
-├── PostgreSQL (pg-ng6akjkmbb4rn9e5.postgresql.de-txl.ionos.com) ✅
-├── MariaDB (ma-d8nn61870q23eimk.mariadb.de-txl.ionos.com) ✅
-└── LoadBalancer (85.215.220.121) ✅
+IONOS Cloud Infrastructure (Ready for Deployment)
+├── MKS Cluster (<cluster-id>)
+├── PostgreSQL (<postgresql-endpoint>)
+├── MariaDB (<mariadb-endpoint>)
+└── LoadBalancer (<loadbalancer-ip>)
 
-Platform Services ✅
-├── Authentik SSO (server + worker) ✅
-├── Redis Session Store ✅  
-├── NGINX Ingress Controller ✅
-└── Secret Management ✅
+Platform Services (Configuration Ready)
+├── Authentik SSO (server + worker)
+├── Redis Session Store
+├── NGINX Ingress Controller
+└── Secret Management
 
-Application Layer ✅  
-├── WordPress (tenant1) ✅
-├── OpenWebUI ✅
-├── IONOS AI Integration ✅
-└── Database Connections ✅
+Application Layer (Configuration Ready)
+├── WordPress (tenant1)
+├── OpenWebUI
+├── IONOS AI Integration
+└── Database Connections
 ```
 
-## Resource Utilization
+## Resource Planning
 - **Cluster Nodes**: 3 nodes (4 cores, 8GB RAM, 100GB SSD each)
-- **Total CPU**: 12 vCPUs available
-- **Total Memory**: 24GB RAM available
-- **Total Storage**: 300GB SSD available
-- **Current Usage**: ~15% CPU, ~20% Memory, ~30% Storage
+- **Total CPU**: 12 vCPUs planned
+- **Total Memory**: 24GB RAM planned
+- **Total Storage**: 300GB SSD planned
+- **Expected Usage**: ~15% CPU, ~20% Memory, ~30% Storage
 
 ## High Availability Configuration
 - **Database Clusters**: Managed HA by IONOS

@@ -1,7 +1,7 @@
 # Documentation Guide
 
-> **Last Updated**: July 8, 2025  
-> **Purpose**: Map of all documentation and where to find specific information
+> **Template**: Documentation structure and organization  
+> **Purpose**: Map of all documentation and configuration references
 
 ## 📚 Documentation Structure
 
@@ -75,7 +75,7 @@ wp-openwebui/
 ## 📋 Documentation Conventions
 
 ### Status Indicators
-- ✅ **Complete/Operational**: Feature or component is fully implemented
+- 🔧 **Configuration Ready**: Feature or component configuration is ready for deployment
 - 🔄 **In Progress**: Active development or partial implementation
 - ❌ **Not Started/Pending**: Planned but not yet implemented
 - ⚠️ **Known Issue**: Problem identified with workaround available
@@ -127,8 +127,8 @@ wp-openwebui/
 
 | Item | Value | Found In |
 |------|-------|----------|
-| Cluster ID | `354372a8-cdfc-4c4c-814c-37effe9bf8a2` | Multiple docs |
-| LoadBalancer IP | `85.215.220.121` | Multiple docs |
+| Cluster ID | `<cluster-id>` | Multiple docs |
+| LoadBalancer IP | `<loadbalancer-ip>` | Multiple docs |
 | PostgreSQL Host | `pg-ng6akjkmbb4rn9e5.postgresql.de-txl.ionos.com` | `INFRASTRUCTURE_STATUS.md` |
 | MariaDB Host | `ma-d8nn61870q23eimk.mariadb.de-txl.ionos.com` | `INFRASTRUCTURE_STATUS.md` |
 

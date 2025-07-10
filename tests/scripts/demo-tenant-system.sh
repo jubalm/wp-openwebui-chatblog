@@ -9,8 +9,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 KUBECONFIG_PATH="${KUBECONFIG_PATH:-$PROJECT_ROOT/kubeconfig.yaml}"
-LOADBALANCER_IP="${LOADBALANCER_IP:-85.215.220.121}"
-CLUSTER_ID="${CLUSTER_ID:-354372a8-cdfc-4c4c-814c-37effe9bf8a2}"
+LOADBALANCER_IP="${LOADBALANCER_IP:-}"
+CLUSTER_ID="${CLUSTER_ID:-}"
 
 # Colors for output
 RED='\033[0;31m'
