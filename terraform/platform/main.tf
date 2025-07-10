@@ -370,6 +370,9 @@ resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
     }
   }
   
+  # Critical: Don't wait for binding with WaitForFirstConsumer storage classes
+  wait_until_bound = false
+  
   lifecycle {
     # Ignore changes to prevent recreation issues
     ignore_changes = [metadata.0.annotations]
