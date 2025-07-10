@@ -116,6 +116,7 @@ resource "helm_release" "nginx_ingress" {
   repository       = "https://kubernetes.github.io/ingress-nginx"
   chart            = "ingress-nginx"
   version          = "4.10.1"
+  timeout          = 600
   
   # Handle existing releases gracefully
   replace = true
@@ -368,6 +369,9 @@ resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
       }
     }
   }
+  
+  # Ensure PVC is created AFTER deployment exists to satisfy WaitForFirstConsumer
+  depends_on = [kubernetes_deployment.wordpress_oauth_pipeline]
 }
 
 resource "kubernetes_secret" "wordpress_oauth_env" {
