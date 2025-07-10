@@ -351,9 +351,6 @@ resource "kubernetes_service" "wordpress_oauth_pipeline" {
 }
 
 resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
-  # Ensure PVC is created after the deployment that will consume it
-  depends_on = [kubernetes_deployment.wordpress_oauth_pipeline]
-  
   metadata {
     name      = "wordpress-oauth-data"
     namespace = kubernetes_namespace.admin_apps.metadata[0].name
