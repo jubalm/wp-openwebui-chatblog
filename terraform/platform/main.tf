@@ -247,6 +247,11 @@ resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
 
   spec {
     replicas = 1
+    
+    strategy {
+      type = "Recreate"  # This ensures old pod is terminated before new one is created
+    }
+    
     selector {
       match_labels = {
         app = "wordpress-oauth-pipeline"
