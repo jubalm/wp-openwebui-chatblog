@@ -122,6 +122,53 @@ jobs:
           path: terraform/platform
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
+      - name: State Validation and Import
+        run: |
+          cd terraform/platform
+          
+          # Get kubeconfig for cluster access
+          terraform -chdir=../infrastructure init
+          terraform -chdir=../infrastructure output -raw kubeconfig > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+          
+          # Function to check if resource exists in state
+          check_state() {
+            terraform state show "$1" >/dev/null 2>&1
+          }
+          
+          # Function to import resource if it exists in cluster but not in state
+          import_if_exists() {
+            local resource_type="$1"
+            local resource_name="$2"
+            local import_id="$3"
+            
+            if ! check_state "$resource_type.$resource_name"; then
+              echo "Checking if $resource_type.$resource_name exists in cluster..."
+              
+              # Try to import the resource
+              if terraform import "$resource_type.$resource_name" "$import_id" 2>/dev/null; then
+                echo "✅ Imported existing $resource_type.$resource_name"
+              else
+                echo "ℹ️  $resource_type.$resource_name not found in cluster - will be created"
+              fi
+            else
+              echo "✅ $resource_type.$resource_name already in state"
+            fi
+          }
+          
+          # Import existing resources if they exist
+          import_if_exists "kubernetes_namespace" "admin_apps" "admin-apps"
+          import_if_exists "helm_release" "nginx_ingress" "ingress-nginx/ingress-nginx"
+          import_if_exists "helm_release" "openwebui" "admin-apps/openwebui"
+          import_if_exists "helm_release" "authentik" "admin-apps/authentik"
+          import_if_exists "kubernetes_deployment" "wordpress_oauth_pipeline" "admin-apps/wordpress-oauth-pipeline"
+          import_if_exists "kubernetes_service" "wordpress_oauth_pipeline" "admin-apps/wordpress-oauth-pipeline"
+          import_if_exists "kubernetes_persistent_volume_claim" "wordpress_oauth_data" "admin-apps/wordpress-oauth-data"
+          import_if_exists "kubernetes_secret" "wordpress_oauth_env" "admin-apps/wordpress-oauth-env-secrets"
+          import_if_exists "kubernetes_secret" "authentik_env" "admin-apps/authentik-env-secrets"
+          import_if_exists "kubernetes_secret" "openwebui_env" "admin-apps/openwebui-env-secrets"
+          
+          echo "✅ State validation and import completed"
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
       - name: Export fresh kubeconfig
