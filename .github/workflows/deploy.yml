@@ -89,23 +89,30 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
       - name: Clean existing authentik resources for fresh deployment
+        env:
+          IONOS_TOKEN: ${{ secrets.IONOS_TOKEN }}
         run: |
           # Get kubeconfig
           curl -X GET \
             "https://api.ionos.com/cloudapi/v6/k8s/clusters/354372a8-cdfc-4c4c-814c-37effe9bf8a2/kubeconfig" \
-            -H "Authorization: Bearer ${{ secrets.IONOS_TOKEN }}" \
+            -H "Authorization: Bearer $IONOS_TOKEN" \
             -H "Content-Type: application/json" \
             -o kubeconfig.yaml
           
-          export KUBECONFIG=./kubeconfig.yaml
+          # Set kubeconfig for all kubectl/helm commands
+          export KUBECONFIG="$(pwd)/kubeconfig.yaml"
           
-          # Remove both helm releases
+          # Remove both helm releases (if they exist)
           helm uninstall authentik -n admin-apps --ignore-not-found || true
           helm uninstall authentik-new -n admin-apps --ignore-not-found || true
           
-          # Remove all authentik resources
+          # Remove all authentik resources by various selectors
           kubectl delete all,secrets,cm,sa,pvc -n admin-apps -l app.kubernetes.io/name=authentik --ignore-not-found || true
-          kubectl delete all,secrets,cm,sa,pvc -n admin-apps --field-selector metadata.name~=authentik --ignore-not-found || true
+          kubectl delete secrets,cm,sa,pvc -n admin-apps --field-selector metadata.name~=authentik --ignore-not-found || true
+          
+          # Specifically target our known secret names
+          kubectl delete secret authentik-env-secrets -n admin-apps --ignore-not-found || true
+          kubectl delete secret authentik -n admin-apps --ignore-not-found || true
           
           # Clean terraform state
           cd terraform/platform
