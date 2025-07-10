@@ -4,7 +4,7 @@
 
 This project provides Infrastructure as Code (IaC) for deploying a WordPress and OpenWebUI integration with Authentik SSO on IONOS Cloud Managed Kubernetes.
 
-**Cluster**: `<cluster-id>` | **LoadBalancer**: `<loadbalancer-ip>`
+**Cluster**: `01721171-9526-4502-a013-116068c8b55d` | **LoadBalancer**: `82.165.51.14`
 
 ### Project Components
 - **Infrastructure**: Kubernetes cluster setup and networking
@@ -35,17 +35,37 @@ kubectl config current-context  # Check if cluster-admin@mks-cluster exists
 kubectl get pods -A  # Use existing context if available
 
 # Fallback: Pull new kubeconfig if needed
-ionosctl k8s kubeconfig get --cluster-id <cluster-id>
+ionosctl k8s kubeconfig get --cluster-id 01721171-9526-4502-a013-116068c8b55d
 kubectl --kubeconfig=./kubeconfig.yaml get pods -A
 ```
 
 ### Service Testing
 ```bash
 # Test all services are responding
-curl -H "Host: wordpress-tenant1.local" http://<loadbalancer-ip>/wp-json/wp/v2/
-curl -H "Host: openwebui.local" http://<loadbalancer-ip>/api/config
-curl -H "Host: authentik.local" http://<loadbalancer-ip>/ -I
+curl -H "Host: wordpress-tenant1.local" http://82.165.51.14/wp-json/wp/v2/
+curl -H "Host: openwebui.local" http://82.165.51.14/api/config
+curl -H "Host: authentik.local" http://82.165.51.14/ -I
 ```
+
+### Recent Breakthroughs (July 10, 2025)
+
+1. **Terraform-Helm Integration Resolved**: 
+   - Root cause: Tool boundary violations between Terraform and Helm
+   - Solution: Clear separation of responsibilities and proper state management
+   - See: `docs/deployment/terraform-helm-integration.md`
+
+2. **CRITICAL: WaitForFirstConsumer Storage Architecture Mastered**:
+   - Root cause: Terraform waits for PVC binding, but IONOS storage requires pod to exist first
+   - Solution: `wait_until_bound = false` breaks the deadlock
+   - Result: ✅ PVC flow working perfectly (Pending → Pod → Binding → Bound)
+   - Key insight: Don't fight cloud provider storage architecture
+
+3. **Current Deployment Status**:
+   - Infrastructure: ✅ Deployed (cluster, networking, databases)
+   - Platform: ✅ Core services deployed, storage architecture resolved
+   - Services: ✅ Authentik, OpenWebUI, PostgreSQL, NGINX Ingress
+   - Storage: ✅ WaitForFirstConsumer flow working as designed
+   - Remaining: Container registry authentication for private images
 
 ### Configuration Updates
 1. **Ollama Migration**: Ollama configuration replaced with IONOS OpenAI API
@@ -143,20 +163,20 @@ Infrastructure → Platform Cleanup → Platform Plan → Platform Apply → Ten
 ## Implementation Status
 
 ### Current Infrastructure Details
-- **Cluster ID**: `<cluster-id>`
-- **LoadBalancer IP**: `<loadbalancer-ip>`
+- **Cluster ID**: `01721171-9526-4502-a013-116068c8b55d`
+- **LoadBalancer IP**: `82.165.51.14`
 - **Region**: DE-TXL (Germany - Berlin)
-- **Status**: Configuration ready - Not deployed
+- **Status**: ✅ Infrastructure deployed, ⚠️ Platform partial deployment
 
 ### Database Connections
-- **PostgreSQL Cluster**: `<postgresql-endpoint>`
+- **PostgreSQL Cluster**: ✅ Deployed
   - Purpose: Authentik SSO backend
-  - Status: To be deployed
+  - Status: Active and connected
   - Database: `authentik`
   
-- **MariaDB Cluster**: `<mariadb-endpoint>`
+- **MariaDB Cluster**: ⏳ Pending
   - Purpose: WordPress database backend
-  - Status: To be deployed
+  - Status: To be deployed (waiting on platform completion)
   - Database: `wordpress_tenant1`
 
 ### AI Integration
@@ -393,9 +413,9 @@ curl -L "http://<loadbalancer-ip>/application/o/authorize/?client_id=openwebui-c
 For detailed implementation notes and configuration, see project documentation.
 
 ## Key Service Endpoints
-- **WordPress**: `wordpress-tenant1.local` → `<loadbalancer-ip>`
-- **OpenWebUI**: `openwebui.local` → `<loadbalancer-ip>`  
-- **Authentik**: `authentik.local` → `<loadbalancer-ip>`
+- **WordPress**: `wordpress-tenant1.local` → `82.165.51.14`
+- **OpenWebUI**: `openwebui.local` → `82.165.51.14`  
+- **Authentik**: `authentik.local` → `82.165.51.14`
 - **Admin Recovery**: `/recovery/use-token/cw3mx6Wp7CqGHizn4aOGJNkwgrBTuiRZf4YhQ9pOHe5iBcbOnxsi9ZwrZ8vG/`
 
 ## OAuth2 Credentials

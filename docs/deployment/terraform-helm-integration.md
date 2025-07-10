@@ -25,6 +25,7 @@ During deployment, we encountered several integration boundary issues between Te
 1. **State Ownership Conflicts**: Resources created by Helm releases were conflicting with Terraform-managed resources
 2. **Circular Dependencies**: Incorrect dependency declarations between PVCs and Deployments
 3. **Stale Plan Errors**: State modifications after plan creation causing apply failures
+4. **WaitForFirstConsumer Storage Deadlock**: Critical architectural mismatch between Terraform expectations and IONOS storage binding behavior
 
 ## Best Practices Implementation
 
@@ -126,12 +127,58 @@ spec {
 }
 ```
 
+### 5. WaitForFirstConsumer Storage Architecture
+
+**CRITICAL**: IONOS storage classes use `WaitForFirstConsumer` binding mode, which creates a fundamental mismatch with Terraform's expectations.
+
+**The Problem:**
+```
+Terraform expectation: PVC → Bound immediately
+IONOS reality: PVC → Pending until pod consumes it
+Result: Deadlock - Terraform waits for PVC, PVC waits for pod, pod blocked by Terraform
+```
+
+**The Solution:**
+```hcl
+resource "kubernetes_persistent_volume_claim" "example" {
+  metadata {
+    name      = "example-pvc"
+    namespace = "default"
+  }
+  
+  spec {
+    access_modes       = ["ReadWriteOnce"]
+    storage_class_name = "ionos-enterprise-hdd"
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+  }
+  
+  # CRITICAL: Don't wait for binding with WaitForFirstConsumer
+  wait_until_bound = false
+  
+  lifecycle {
+    ignore_changes = [metadata.0.annotations]
+  }
+}
+```
+
+**Proper Flow with wait_until_bound = false:**
+1. PVC created → Pending state ✅
+2. Terraform continues immediately (doesn't wait) ✅  
+3. Deployment created → Pod starts ✅
+4. Pod requests volume → Triggers PVC binding ✅
+5. Storage provisioner creates volume → PVC becomes Bound ✅
+
 ## Common Pitfalls to Avoid
 
 1. **Don't create circular dependencies**: PVCs should not depend on deployments that consume them
 2. **Don't modify state after planning**: Import operations should happen during the plan phase
 3. **Don't fight tool boundaries**: Let Helm manage application-specific resources
 4. **Don't ignore existing resources**: Always check and import existing resources before creating
+5. **NEVER wait for WaitForFirstConsumer PVCs**: Always use `wait_until_bound = false` with IONOS storage classes
 
 ## Workflow Integration
 
