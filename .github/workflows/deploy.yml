@@ -104,6 +104,10 @@ jobs:
           if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
             terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
           fi
+          # Import Authentik helm release if it exists
+          if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
+            terraform import helm_release.authentik admin-apps/authentik || true
+          fi
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
@@ -153,6 +157,10 @@ jobs:
           fi
           if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
             terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
+          fi
+          # Import Authentik helm release if it exists
+          if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
+            terraform import helm_release.authentik admin-apps/authentik || true
           fi
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
