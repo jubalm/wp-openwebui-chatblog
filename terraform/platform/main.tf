@@ -167,13 +167,9 @@ resource "helm_release" "authentik" {
           user     = var.pg_username
           password = var.pg_password
         }
-        env_from = [
-          {
-            secretRef = {
-              name = kubernetes_secret.authentik_env.metadata[0].name
-            }
-          }
-        ]
+        redis = {
+          host = "authentik-redis-master.admin-apps.svc.cluster.local"
+        }
       }
       postgresql = {
         enabled = false
