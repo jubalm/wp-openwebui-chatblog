@@ -283,6 +283,10 @@ resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
       }
 
       spec {
+        image_pull_secrets {
+          name = kubernetes_secret.ionos_cr_secret.metadata[0].name
+        }
+        
         container {
           name  = "wordpress-oauth-pipeline"
           image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
@@ -392,6 +396,27 @@ resource "kubernetes_secret" "wordpress_oauth_env" {
   }
 }
 
+resource "kubernetes_secret" "ionos_cr_secret" {
+  metadata {
+    name      = "ionos-cr-secret"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  
+  type = "kubernetes.io/dockerconfigjson"
+  
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        "wp-openwebui.cr.de-fra.ionos.com" = {
+          username = var.cr_username
+          password = var.cr_password
+          auth     = base64encode("${var.cr_username}:${var.cr_password}")
+        }
+      }
+    })
+  }
+}
+
 resource "random_password" "wordpress_encryption_key" {
   length  = 32
   special = true
@@ -452,6 +477,18 @@ variable "authentik_client_id" {
 variable "authentik_client_secret" {
   type        = string
   description = "Authentik OAuth2 Client Secret for WordPress integration"
+  sensitive   = true
+}
+
+variable "cr_username" {
+  type        = string
+  description = "Container registry username"
+  sensitive   = true
+}
+
+variable "cr_password" {
+  type        = string
+  description = "Container registry password"
   sensitive   = true
 }
 
