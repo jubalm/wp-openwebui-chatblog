@@ -3,6 +3,33 @@ set -euo pipefail
 
 echo "Starting WordPress with custom entrypoint..."
 
+# Create SQLite database directory if using SQLite
+if [ "${DATABASE_TYPE:-mysql}" = "sqlite" ]; then
+    echo "Setting up SQLite database..."
+    
+    # Create database directory
+    mkdir -p /var/www/html/wp-content/database
+    chown -R www-data:www-data /var/www/html/wp-content/database
+    chmod 755 /var/www/html/wp-content/database
+    
+    # Create .htaccess file to protect database
+    cat > /var/www/html/wp-content/database/.htaccess << 'EOF'
+# Protect database files
+<Files ~ "\.(sqlite|db)$">
+    Order allow,deny
+    Deny from all
+</Files>
+EOF
+    
+    # Set SQLite configuration in wp-config.php
+    echo "Setting SQLite configuration..."
+    echo "define('DB_DIR', '/var/www/html/wp-content/database/');" >> /var/www/html/wp-config.php
+    echo "define('DB_FILE', 'wordpress.sqlite');" >> /var/www/html/wp-config.php
+    echo "define('USE_MYSQL', false);" >> /var/www/html/wp-config.php
+    
+    echo "SQLite database setup complete!"
+fi
+
 # Start WordPress setup in background
 {
     # Wait for WordPress and database to be ready

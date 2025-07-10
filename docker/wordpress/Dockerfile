@@ -52,6 +52,9 @@ RUN chmod +x /usr/local/bin/wp && \
   chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins && \
   chmod -R 755 /usr/src/wordpress/wp-content/plugins
 
+# Copy wp-sqlite-db drop-in for SQLite database support
+COPY db.php /usr/src/wordpress/wp-content/db.php
+
 # Copy custom entrypoint script
 COPY wp-entrypoint.sh /usr/local/bin/wp-entrypoint.sh
 RUN chmod +x /usr/local/bin/wp-entrypoint.sh
