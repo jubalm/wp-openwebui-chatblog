@@ -58,6 +58,29 @@ curl -H "Host: authentik.local" http://85.215.220.121/ -I
    - Restored full Terraform management of: authentik helm release, wordpress oauth pipeline (deployment/service/pvc/secret)
    - Resources exist in cluster but need import into Terraform state (expected "already exists" errors)
 
+### 🚀 PERFECT ONE-SHOT DEPLOYMENT PLAN (July 10, 2025 - 11:00 AM)
+
+**STATUS**: Implemented nuclear clean + fresh deploy strategy for blissful one-shot workflow
+
+**Plan Overview**:
+- **Problem**: Multiple conflicting Authentik helm releases (`authentik` + `authentik-new`) with resource ownership conflicts
+- **Solution**: Added pre-deployment cleanup step that removes ALL Authentik traces before fresh deployment
+- **Goal**: Achieve perfect one-shot deployment from start to finish without any conflicts
+
+**Implementation Details**:
+1. ✅ **Pre-deployment Cleanup Step**: Added to workflow before terraform plan
+   - Removes both `authentik` and `authentik-new` helm releases
+   - Deletes all authentik resources by labels and name patterns
+   - Cleans terraform state of authentik resources
+2. ✅ **Removed Import Logic**: No longer needed for clean slate deployment
+3. ✅ **Simplified Helm Config**: Removed force_update/recreate_pods flags
+4. ✅ **Clean Resource Creation**: All resources created fresh with proper Helm ownership
+
+**Expected Workflow Flow**:
+Infrastructure → Platform Cleanup → Platform Plan → Platform Apply → Tenants → Post-Deploy
+
+This guarantees blissful one-shot deployment by eliminating all conflict sources.
+
 ### ✅ WORKFLOW SYNC COMPLETED (July 10, 2025 - 10:30 AM)
 
 **STATUS**: GitHub Actions workflow successfully synced with local Terraform state

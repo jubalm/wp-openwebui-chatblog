@@ -88,29 +88,29 @@ jobs:
           terraform_version: 1.9.0
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-      - name: Import existing platform resources if needed
+      - name: Clean existing authentik resources for fresh deployment
         run: |
+          # Get kubeconfig
+          curl -X GET \
+            "https://api.ionos.com/cloudapi/v6/k8s/clusters/354372a8-cdfc-4c4c-814c-37effe9bf8a2/kubeconfig" \
+            -H "Authorization: Bearer ${{ secrets.IONOS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -o kubeconfig.yaml
+          
+          export KUBECONFIG=./kubeconfig.yaml
+          
+          # Remove both helm releases
+          helm uninstall authentik -n admin-apps --ignore-not-found || true
+          helm uninstall authentik-new -n admin-apps --ignore-not-found || true
+          
+          # Remove all authentik resources
+          kubectl delete all,secrets,cm,sa,pvc -n admin-apps -l app.kubernetes.io/name=authentik --ignore-not-found || true
+          kubectl delete all,secrets,cm,sa,pvc -n admin-apps --field-selector metadata.name~=authentik --ignore-not-found || true
+          
+          # Clean terraform state
           cd terraform/platform
-          # Check if resources need to be imported
-          if ! terraform state show kubernetes_deployment.wordpress_oauth_pipeline >/dev/null 2>&1; then
-            terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
-          fi
-          if ! terraform state show kubernetes_service.wordpress_oauth_pipeline >/dev/null 2>&1; then
-            terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
-          fi
-          if ! terraform state show kubernetes_persistent_volume_claim.wordpress_oauth_data >/dev/null 2>&1; then
-            terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || true
-          fi
-          if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
-            terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
-          fi
-          # Import Authentik helm release if it exists
-          if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
-            # Check if authentik release exists in cluster
-            if helm list -n admin-apps | grep -q "^authentik\s"; then
-              terraform import helm_release.authentik admin-apps/authentik || true
-            fi
-          fi
+          terraform state rm helm_release.authentik || true
+          terraform state rm kubernetes_secret.authentik_env || true
       - name: Terraform Plan
         run: timeout 300 terraform -chdir=terraform/platform plan -out=tfplan
       - name: Upload Plan
@@ -145,29 +145,6 @@ jobs:
           path: terraform/platform
       - name: Terraform Init
         run: terraform -chdir=terraform/platform init
-      - name: Import existing platform resources if needed
-        run: |
-          cd terraform/platform
-          # Check if resources need to be imported
-          if ! terraform state show kubernetes_deployment.wordpress_oauth_pipeline >/dev/null 2>&1; then
-            terraform import kubernetes_deployment.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
-          fi
-          if ! terraform state show kubernetes_service.wordpress_oauth_pipeline >/dev/null 2>&1; then
-            terraform import kubernetes_service.wordpress_oauth_pipeline admin-apps/wordpress-oauth-pipeline || true
-          fi
-          if ! terraform state show kubernetes_persistent_volume_claim.wordpress_oauth_data >/dev/null 2>&1; then
-            terraform import kubernetes_persistent_volume_claim.wordpress_oauth_data admin-apps/wordpress-oauth-data || true
-          fi
-          if ! terraform state show kubernetes_secret.wordpress_oauth_env >/dev/null 2>&1; then
-            terraform import kubernetes_secret.wordpress_oauth_env admin-apps/wordpress-oauth-env-secrets || true
-          fi
-          # Import Authentik helm release if it exists
-          if ! terraform state show helm_release.authentik >/dev/null 2>&1; then
-            # Check if authentik release exists in cluster
-            if helm list -n admin-apps | grep -q "^authentik\s"; then
-              terraform import helm_release.authentik admin-apps/authentik || true
-            fi
-          fi
       - name: Terraform Apply
         run: terraform -chdir=terraform/platform apply -auto-approve tfplan
       - name: Export fresh kubeconfig

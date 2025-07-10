@@ -149,8 +149,6 @@ resource "helm_release" "authentik" {
   create_namespace  = false
   dependency_update = true
   timeout           = 600
-  force_update      = true
-  recreate_pods     = true
 
   depends_on = [
     ionoscloud_pg_cluster.postgres,
