@@ -65,12 +65,19 @@ curl -H "Host: authentik.local" http://82.165.51.14/ -I
    - Solution: Created kubernetes.io/dockerconfigjson secret with CR credentials
    - Result: ✅ Image pull successful, pod running (1/1 Running)
 
-4. **Current Deployment Status**:
+4. **NetworkPolicy Configuration Resolved**:
+   - Root cause: Invalid egress rule with empty `to {}` specification
+   - Solution: Proper IP block specifications for HTTPS/HTTP/DNS egress
+   - Result: ✅ Tenant deployment phase completed successfully
+
+5. **Current Deployment Status (July 10, 2025 - Latest)**:
    - Infrastructure: ✅ Deployed (cluster, networking, databases)
    - Platform: ✅ All core services deployed and running
    - Services: ✅ Authentik, OpenWebUI, PostgreSQL, NGINX Ingress, WordPress OAuth Pipeline
    - Storage: ✅ WaitForFirstConsumer flow working perfectly
    - Authentication: ✅ Container registry access resolved
+   - Tenants: ✅ Tenant1 namespace and resources deployed
+   - WordPress: ⚠️ Pod running but 500 Internal Server Error (SQLite config issue)
 
 ### Configuration Updates
 1. **Ollama Migration**: Ollama configuration replaced with IONOS OpenAI API
@@ -272,49 +279,42 @@ Infrastructure → Platform Cleanup → Platform Plan → Platform Apply → Ten
 3. Optimize Docker images size
 4. Enable horizontal pod autoscaling
 
-### Known Issues and Workarounds
+### Current Issues and Next Steps
 
-#### 1. Pipeline Service Import Error
-**Issue**: `ModuleNotFoundError: No module named 'wordpress_client'`
-**Status**: Known issue with Docker build
-**Workaround**: 
+#### 1. WordPress SQLite Configuration (Active Issue)
+**Issue**: WordPress free tier pod shows "Database not ready, waiting..." but should use SQLite
+**Status**: ⚠️ Active - WordPress pod running but 500 Internal Server Error
+**Environment**: Correctly configured with `DATABASE_TYPE: sqlite`, `SQLITE_DB_PATH: /var/www/html/wp-content/database/wordpress.sqlite`
+**Root Cause**: WordPress container may not be properly handling SQLite configuration
+**Next Step**: Investigate WordPress chart/container SQLite setup
+
+#### 2. .local Domain Access Pattern (Clarified)
+**Issue**: .local domains unreachable from external access
+**Status**: ✅ This is expected behavior - .local domains are for local development
+**Correct Access Method**: 
 ```bash
-# Option 1: Manual fix in running container
-kubectl exec -it -n admin-apps <pod-name> -- /bin/bash
-cd /app && python -m pip install -e .
-
-# Option 2: Use ConfigMap for Python files
-kubectl create configmap pipeline-code --from-file=pipelines/
+# Test services via LoadBalancer IP with Host headers
+curl -H "Host: wordpress-tenant1.local" http://82.165.51.14/
+curl -H "Host: authentik.local" http://82.165.51.14/
+curl -H "Host: openwebui.local" http://82.165.51.14/
 ```
 
-#### 2. OAuth2 Frontend UI
-**Issue**: "Login with Authentik SSO" button not visible
-**Status**: Backend configured, frontend pending
-**Workaround**: Direct API authentication works
-```bash
-# Use OAuth2 flow directly
-curl -L "http://<loadbalancer-ip>/application/o/authorize/?client_id=openwebui-client&redirect_uri=http://<loadbalancer-ip>/oauth/oidc/callback"
-```
+#### 3. Post-Deployment Steps (Minor)
+**Issue**: Post-deployment job fails - missing Terraform setup in workflow
+**Status**: ⚠️ Minor - main deployment succeeded, only post-config steps failed
+**Solution**: Add Terraform setup action to post-deployment job
 
-#### 3. OIDC Discovery Endpoint
-**Issue**: Authentik 2023.8.3 endpoint format differs
-**Status**: Investigation needed
-**Workaround**: Manual configuration in OpenWebUI
+#### 4. OAuth2 Frontend UI (Secondary)
+**Issue**: "Login with Authentik SSO" button not visible in OpenWebUI
+**Status**: Backend configured, frontend integration pending
+**Priority**: Low - core authentication infrastructure working
 
-#### 4. Platform Resource Import
-**Issue**: Resource import procedures available for Terraform state management
-**Status**: Available workaround
-
-#### 5. Authentik Helm Release Ownership
-**Issue**: Potential resource ownership conflicts
-**Status**: Managed via cleanup approach
-- Existing helm release may have resource ownership conflicts
-- force_update and recreate_pods flags available to handle upgrades
-- May require manual cleanup of conflicting ServiceAccounts
-
-#### 6. Tenant Configuration
-**Issue**: MariaDB CIDR range needs RFC1918 compliance, NetworkPolicy egress rule needs proper peer specification
-**Status**: Configuration updates needed
+### Resolved Issues ✅
+- ✅ WaitForFirstConsumer storage architecture deadlock 
+- ✅ Container registry authentication (imagePullSecrets)
+- ✅ NetworkPolicy egress rule validation
+- ✅ Terraform-Helm tool boundary conflicts
+- ✅ Circular dependency issues (PVC/Deployment)
 
 ### Technical Implementation Notes
 
