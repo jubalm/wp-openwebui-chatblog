@@ -115,6 +115,10 @@ curl -H "Host: authentik.local" http://85.215.220.121/ -I
 
 ### Known Issues
 1. **Platform Resource Import**: ✅ RESOLVED - All resources successfully imported into Terraform state
+2. **Authentik Helm Release Ownership**: In Progress
+   - Existing helm release has resource ownership conflicts
+   - Added force_update and recreate_pods flags to handle upgrades
+   - May require manual cleanup of conflicting ServiceAccounts
 2. **OAuth2 Frontend UI**: "Login with Authentik SSO" button not visible
    - Status: Backend configured, frontend integration pending
 3. **Tenant Apply Configuration Issues** (Secondary Priority):
