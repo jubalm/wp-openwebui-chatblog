@@ -140,52 +140,50 @@ resource "helm_release" "openwebui" {
   ]
 }
 
-# TEMPORARILY DISABLED - Resource exists but causes state conflicts
-# TODO: Import existing helm release into Terraform state
-# resource "helm_release" "authentik" {
-#   name              = "authentik"
-#   namespace         = kubernetes_namespace.admin_apps.metadata[0].name
-#   repository        = "https://charts.goauthentik.io"
-#   chart             = "authentik"
-#   version           = "2024.10.5"
-#   create_namespace  = false
-#   dependency_update = true
-#   timeout           = 600
-# 
-#   depends_on = [
-#     ionoscloud_pg_cluster.postgres,
-#     ionoscloud_pg_database.authentik,
-#     kubernetes_secret.authentik_env
-#   ]
-# 
-#   values = [
-#     yamlencode({
-#       authentik = {
-#         secret_key = random_password.authentik_secret_key.result
-#         postgresql = {
-#           host     = ionoscloud_pg_cluster.postgres.dns_name
-#           port     = 5432
-#           name     = ionoscloud_pg_database.authentik.name
-#           user     = var.pg_username
-#           password = var.pg_password
-#         }
-#         env_from = [
-#           {
-#             secretRef = {
-#               name = kubernetes_secret.authentik_env.metadata[0].name
-#             }
-#           }
-#         ]
-#       }
-#       postgresql = {
-#         enabled = false
-#       }
-#       redis = {
-#         enabled = true
-#       }
-#     })
-#   ]
-# }
+resource "helm_release" "authentik" {
+  name              = "authentik"
+  namespace         = kubernetes_namespace.admin_apps.metadata[0].name
+  repository        = "https://charts.goauthentik.io"
+  chart             = "authentik"
+  version           = "2024.10.5"
+  create_namespace  = false
+  dependency_update = true
+  timeout           = 600
+
+  depends_on = [
+    ionoscloud_pg_cluster.postgres,
+    ionoscloud_pg_database.authentik,
+    kubernetes_secret.authentik_env
+  ]
+
+  values = [
+    yamlencode({
+      authentik = {
+        secret_key = random_password.authentik_secret_key.result
+        postgresql = {
+          host     = ionoscloud_pg_cluster.postgres.dns_name
+          port     = 5432
+          name     = ionoscloud_pg_database.authentik.name
+          user     = var.pg_username
+          password = var.pg_password
+        }
+        env_from = [
+          {
+            secretRef = {
+              name = kubernetes_secret.authentik_env.metadata[0].name
+            }
+          }
+        ]
+      }
+      postgresql = {
+        enabled = false
+      }
+      redis = {
+        enabled = true
+      }
+    })
+  ]
+}
 
 resource "ionoscloud_pg_database" "authentik" {
   cluster_id = ionoscloud_pg_cluster.postgres.id
@@ -238,137 +236,128 @@ resource "kubernetes_secret" "openwebui_env" {
   }
 }
 
-# TEMPORARILY DISABLED - Resource exists but causes state conflicts
-# TODO: Import existing deployment into Terraform state
-# WordPress OAuth2 Pipeline deployment
-# resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
-#   metadata {
-#     name      = "wordpress-oauth-pipeline"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#     labels = {
-#       app = "wordpress-oauth-pipeline"
-#     }
-#   }
-# 
-#   spec {
-#     replicas = 1
-#     selector {
-#       match_labels = {
-#         app = "wordpress-oauth-pipeline"
-#       }
-#     }
-# 
-#     template {
-#       metadata {
-#         labels = {
-#           app = "wordpress-oauth-pipeline"
-#         }
-#       }
-# 
-#       spec {
-#         container {
-#           name  = "wordpress-oauth-pipeline"
-#           image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
-#           port {
-#             container_port = 9099
-#           }
-# 
-#           env_from {
-#             secret_ref {
-#               name = kubernetes_secret.wordpress_oauth_env.metadata[0].name
-#             }
-#           }
-# 
-#           volume_mount {
-#             name       = "data"
-#             mount_path = "/app/data"
-#           }
-# 
-#           liveness_probe {
-#             http_get {
-#               path = "/health"
-#               port = 9099
-#             }
-#             initial_delay_seconds = 30
-#             period_seconds        = 10
-#           }
-# 
-#           readiness_probe {
-#             http_get {
-#               path = "/health"
-#               port = 9099
-#             }
-#             initial_delay_seconds = 5
-#             period_seconds        = 5
-#           }
-#         }
-# 
-#         volume {
-#           name = "data"
-#           persistent_volume_claim {
-#             claim_name = kubernetes_persistent_volume_claim.wordpress_oauth_data.metadata[0].name
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+resource "kubernetes_deployment" "wordpress_oauth_pipeline" {
+  metadata {
+    name      = "wordpress-oauth-pipeline"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+    labels = {
+      app = "wordpress-oauth-pipeline"
+    }
+  }
 
-# TEMPORARILY DISABLED - Resource exists but causes state conflicts
-# TODO: Import existing service into Terraform state
-# resource "kubernetes_service" "wordpress_oauth_pipeline" {
-#   metadata {
-#     name      = "wordpress-oauth-pipeline"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-# 
-#   spec {
-#     selector = {
-#       app = "wordpress-oauth-pipeline"
-#     }
-# 
-#     port {
-#       port        = 9099
-#       target_port = 9099
-#     }
-# 
-#     type = "ClusterIP"
-#   }
-# }
+  spec {
+    replicas = 1
+    selector {
+      match_labels = {
+        app = "wordpress-oauth-pipeline"
+      }
+    }
 
-# TEMPORARILY DISABLED - Resource exists but causes state conflicts
-# TODO: Import existing PVC into Terraform state
-# resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
-#   metadata {
-#     name      = "wordpress-oauth-data"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-# 
-#   spec {
-#     access_modes = ["ReadWriteOnce"]
-#     storage_class_name = "ionos-enterprise-hdd"
-#     resources {
-#       requests = {
-#         storage = "1Gi"
-#       }
-#     }
-#   }
-# }
+    template {
+      metadata {
+        labels = {
+          app = "wordpress-oauth-pipeline"
+        }
+      }
 
-# TEMPORARILY DISABLED - Resource exists but causes state conflicts
-# TODO: Import existing secret into Terraform state
-# resource "kubernetes_secret" "wordpress_oauth_env" {
-#   metadata {
-#     name      = "wordpress-oauth-env-secrets"
-#     namespace = kubernetes_namespace.admin_apps.metadata[0].name
-#   }
-#   data = {
-#     WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
-#     AUTHENTIK_URL           = "http://authentik.local"
-#     AUTHENTIK_CLIENT_ID     = var.authentik_client_id
-#     AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
-#   }
-# }
+      spec {
+        container {
+          name  = "wordpress-oauth-pipeline"
+          image = "wp-openwebui.cr.de-fra.ionos.com/jubalm/ionos/poc/wordpress-oauth-pipeline:latest"
+          port {
+            container_port = 9099
+          }
+
+          env_from {
+            secret_ref {
+              name = kubernetes_secret.wordpress_oauth_env.metadata[0].name
+            }
+          }
+
+          volume_mount {
+            name       = "data"
+            mount_path = "/app/data"
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/health"
+              port = 9099
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 10
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/health"
+              port = 9099
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 5
+          }
+        }
+
+        volume {
+          name = "data"
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim.wordpress_oauth_data.metadata[0].name
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "wordpress_oauth_pipeline" {
+  metadata {
+    name      = "wordpress-oauth-pipeline"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = "wordpress-oauth-pipeline"
+    }
+
+    port {
+      port        = 9099
+      target_port = 9099
+    }
+
+    type = "ClusterIP"
+  }
+}
+
+resource "kubernetes_persistent_volume_claim" "wordpress_oauth_data" {
+  metadata {
+    name      = "wordpress-oauth-data"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+    storage_class_name = "ionos-enterprise-hdd"
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+  }
+}
+
+resource "kubernetes_secret" "wordpress_oauth_env" {
+  metadata {
+    name      = "wordpress-oauth-env-secrets"
+    namespace = kubernetes_namespace.admin_apps.metadata[0].name
+  }
+  data = {
+    WORDPRESS_ENCRYPTION_KEY = random_password.wordpress_encryption_key.result
+    AUTHENTIK_URL           = "http://authentik.local"
+    AUTHENTIK_CLIENT_ID     = var.authentik_client_id
+    AUTHENTIK_CLIENT_SECRET = var.authentik_client_secret
+  }
+}
 
 resource "random_password" "wordpress_encryption_key" {
   length  = 32
